@@ -1,0 +1,5 @@
+---
+vector:
+    hosts:
+      hw82-vector:
+        ansible_host: root@192.168.10.83

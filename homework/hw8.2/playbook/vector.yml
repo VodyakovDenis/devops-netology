@@ -1,0 +1,41 @@
+---
+- name: Install Vector
+  hosts: hw82-vector
+  tasks:
+    - name: Install tar
+      become: true
+      ansible.builtin.apt:
+        name:
+          - tar
+      tags:
+        - Install tar
+    - name: Vector distrib
+      ansible.builtin.get_url:
+        url: "https://packages.timber.io/vector/{{ vector_version }}/vector-{{ vector_version }}-x86_64-unknown-linux-musl.tar.gz"
+        dest: "./vector-{{ vector_version }}-x86_64-unknown-linux-musl.tar.gz"
+      tags:
+        - Vector distrib
+    - name: Unpack vector distrib
+      ansible.builtin.unarchive:
+        src: "./vector-{{ vector_version }}-x86_64-unknown-linux-musl.tar.gz"
+        dest: "./"
+        remote_src: true
+      tags:
+        - Unpack vector distrib
+    - name: Install vector
+      become: true
+      ansible.builtin.copy:
+        src: "vector-x86_64-unknown-linux-musl/bin/vector"
+        dest: "/usr/local/bin/"
+        remote_src: true
+        mode: 755
+      tags:
+        - Install vector
+    - name: Check vector version
+      ansible.builtin.shell:
+        cmd: vector --version
+      register: result
+      changed_when:
+        - 'vector_version not in result.stdout'
+      tags:
+        - vector_check_version
