@@ -1,0 +1,60 @@
+---
+# tasks file for lighthouse-role
+  tasks:
+    - name: lighthouse | install dependencies
+      become: true
+      ansible.builtin.yum:
+        name:
+          - git
+          - epel-release
+    - name: lighthouse | create nginx site dir
+      become: true
+      ansible.builtin.file:
+        mode: "755"
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_gid }}"
+        path: "/var/www"
+        state: "directory"
+    - name: lighthouse | create nginx log dir
+      become: true
+      ansible.builtin.file:
+        mode: "755"
+        owner: "{{ ansible_user_id }}"
+        group: "{{ ansible_user_gid }}"
+        path: "/var/log/nginx"
+        state: "directory"
+    - name: lighthouse | clone repository
+      ansible.builtin.git:
+        repo: "{{ lighthouse_vcs }}"
+        dest: "{{ lighthouse_location }}"
+        version: "{{ lighthouse_vcs_version }}"
+    - name: lighthouse | config selinux
+      become: true
+      ansible.builtin.command:
+        cmd: chcon -Rt httpd_sys_content_t /var/www
+      changed_when: false
+    - name: lighthouse | install nginx
+      become: true
+      ansible.builtin.yum:
+        name: nginx
+        state: present
+    - name: lighthouse | nginx template config
+      become: true
+      ansible.builtin.template:
+        src: "templates/nginx.conf.j2"
+        dest: "/etc/nginx/nginx.conf"
+        mode: "755"
+    - name: lighthouse | nginx lighthouse config
+      become: true
+      ansible.builtin.template:
+        src: "templates/nginx.lighthouse.conf.j2"
+        dest: "/etc/nginx/conf.d/lighthouse.conf"
+        mode: "755"
+    - name: lighthouse | start nginx service
+      become: true
+      ansible.builtin.service:
+        name: nginx
+        state: started
+    - name: lighthouse | check service is accessible
+      ansible.builtin.uri:
+        url: http://localhost
