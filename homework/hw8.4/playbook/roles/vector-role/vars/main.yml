@@ -1,6 +1,4 @@
 ---
-vector_version: 0.28.0
-vector_config_dir: /var/lib/vector
-vector_config:
-  data_dir: /var/lib/vector
-  # todo добавить конфигурацию https://vector.dev/docs/reference/configuration/
+vector_path: "/opt/vector"
+vector_data_path: "/var/lib/vector"
+vector_config: "{{ vector_path }}/config/vector.toml"

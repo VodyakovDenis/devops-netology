@@ -2,6 +2,13 @@
 Description=Vector service
 [Service]
 User={{ ansible_user_id }}
-Group={{ ansible_user_gid }}
-ExecStart=/usr/local/bin/vector --config-yaml {{ vector_config_dir }}/vector.yaml --watch-config
+Group={{ ansible_user_id }}
+ExecStartPre={{ vector_path }}/bin/vector validate --config-toml {{ vector_config }}
+ExecStart={{ vector_path }}/bin/vector --config-toml {{ vector_config }}
+ExecReload={{ vector_path }}/bin/vector validate --config-toml{{ vector_config }}
 Restart=always
+EnvironmentFile=-/etc/default/vector
+StartLimitInterval=10
+StartLimitBurst=5
+[Install]
+WantedBy=multi-user.target
