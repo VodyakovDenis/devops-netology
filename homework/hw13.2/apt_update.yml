@@ -1,0 +1,7 @@
+- name: apt update all hosts
+  hosts: all
+  tasks:
+    - name: apt update the system
+      command: apt update
+      async: 1
+      poll: 0

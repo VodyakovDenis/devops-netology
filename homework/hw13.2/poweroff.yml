@@ -1,0 +1,7 @@
+- name: poweroff all hosts
+  hosts: all
+  tasks:
+    - name: poweroff the system
+      command: /sbin/poweroff
+      async: 1
+      poll: 0

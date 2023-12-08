@@ -1,0 +1,7 @@
+- name: Reboot all hosts
+  hosts: all
+  tasks:
+    - name: Reboot the system
+      command: /sbin/reboot
+      async: 1
+      poll: 0
