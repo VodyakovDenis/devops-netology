@@ -1468,6 +1468,7 @@ c6c9a973eaf4   vodyakovdenis/diplom-app:v1.0   "/docker-entrypoint.…"   9 seco
 ---
 ## Подготовка cистемы мониторинга и деплой приложения
 
+
 <details><summary>install helm</summary>
 
 * [оф дока](https://helm.sh/docs/intro/install/)
@@ -1481,16 +1482,85 @@ $ ./get_helm.sh
 
 </details>
 
-<details><summary>install prometheus</summary>
+<details><summary>install ingress-controller</summary>
 
 ```bash
-root@k8s-node1:/home/ubuntu# helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-root@k8s-node1:/home/ubuntu# helm repo update
+helm upgrade --install ingress-nginx ingress-nginx \
+--repo https://kubernetes.github.io/ingress-nginx \
+--namespace ingress-nginx --create-namespace
 ```
+
+Обязательно не забываем "[пропатчить](https://docs.nginx.com/nginx-ingress-controller/installation/installing-nic/installation-with-helm/)" 
 
 ```bash
-
+helm pull oci://ghcr.io/nginxinc/charts/nginx-ingress --untar --version 1.1.2
+cd nginx-ingress
+kubectl apply -f crds/
 ```
+
+</details>
+
+<details><summary>* Если вдруг проблема с DNS</summary>
+
+накаждой ноде нужно:
+```bash
+systemctl mask firewald
+```
+
+затем самое просто грохнуть кор-днс
+```bash
+kubectl delete pods -n kube-system -l k8s-app=kube-dns
+```
+
+проверяем что новые поднялись:
+```bash
+kubectl get pods -n kube-system -l k8s-app=kube-dns
+```
+
+для тестов можем поднять dnsutils под
+```bash
+kubectl apply -f https://k8s.io/examples/admin/dns/dnsutils.yaml
+```
+
+и увидем:
+```bash
+root@dnsutils:/# ping ya.ru
+PING ya.ru (5.255.255.242) 56(84) bytes of data.
+64 bytes from ya.ru (5.255.255.242): icmp_seq=1 ttl=248 time=1.17 ms
+64 bytes from ya.ru (5.255.255.242): icmp_seq=2 ttl=248 time=0.451 ms
+```
+
+</details>
+
+<details><summary>* Если нет EXTERNAL-IP (на яндексе)</summary>
+
+Арендуем IP у Яндекса
+
+![img5](img/img5.png)
+
+```bash
+kubectl apply -f externalIP.yaml
+```
+
+[externalIP.yaml](file/ingress-control/externalIP.yaml)
+
+</details>
+
+</details>
+
+<details><summary>install prometheus + grafana</summary>
+
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+kubectl create namespace monitoring
+helm install kube-prom-stack prometheus-community/kube-prometheus-stack -n monitoring -f values.yaml
+```
+
+[values.yaml](file/monitoring/values.yaml)
+
+
+</details>
 
 Открываем доступ к prometeus:
 
@@ -1500,23 +1570,7 @@ root@k8s-node1:/home/ubuntu# helm repo update
 
 </details>
 
-<details><summary>install grafana</summary>
-
-```bash
-
-```
-
-```bash
-
-
-```
-
-Открываем доступ к grafana:
-```bash
-
-```
-
-Получаем пароль:
+<details><summary>***</summary>
 
 ```bash
 
