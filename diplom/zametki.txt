@@ -1,0 +1,37 @@
+### часть кода терраформ для создания балансировщика
+resource "yandex_alb_load_balancer" "diplom-balancer" {
+  name        = "diplom-balancer"
+
+  network_id  = yandex_vpc_network.diplom-network.id
+
+  allocation_policy {
+    location {
+      zone_id   = "ru-central1-a"
+      subnet_id = yandex_vpc_subnet.diplom-network-subnet-a.id 
+    }
+    location {
+      zone_id   = "ru-central1-b"
+      subnet_id = yandex_vpc_subnet.diplom-network-subnet-b.id 
+    }
+  }
+
+  listener {
+    name = "http"
+    endpoint {
+      address {
+        external_ipv4_address {
+        }
+      }
+      ports = [ 80 ]
+    }
+    http {
+      handler {
+
+      }
+    }
+  }
+
+  log_options {
+    disable = true
+  }
+}

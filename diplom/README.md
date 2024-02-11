@@ -1036,39 +1036,6 @@ deprecation_warnings=False
 
 ```bash
 ---
-- name: Install Docker and Utils
-  hosts: external
-  become: true
-  tasks:
-
-    - name: Docker INSTALL | Del sourcelists docker
-      file:
-        path: "{{ item }}"
-        state: absent
-      with_items:
-        - /etc/apt/sources.list.d/docker.list
-      ignore_errors: yes
-
-    - name: Docker INSTALL | Add Docker GPG key
-      apt_key: url=https://download.docker.com/linux/ubuntu/gpg
-
-    - name: Docker INSTALL | Add Docker APT repository
-      apt_repository:
-        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ansible_distribution_release}} stable
-      ignore_errors: yes
-      
-    - name: Install Docker and Utils | Install utils
-      ansible.builtin.apt:
-        name:
-          - curl
-          - git
-          - vim
-          - wget
-          - apt-transport-https
-          - gpg
-          - bash-completion
-        state: present
-
 - name: Prepare to install Kubernetes
   become: true
   hosts: external
@@ -1117,7 +1084,6 @@ deprecation_warnings=False
         - name: net.bridge.bridge-nf-call-ip6tables
           value: 1
 
-
     - name: Prepare to install Kubernetes | Exec commands
       ansible.builtin.command: "{{ item }}"
       with_items:
@@ -1127,6 +1093,16 @@ deprecation_warnings=False
         - swapoff -a
       register: result
       changed_when: result.rc != 0
+
+    - name: Stop UFW service
+      systemd:
+        name: ufw
+        state: stopped
+        enabled: no
+
+    - name: Mask firewalld service
+      shell:
+        cmd: systemctl mask firewalld
 
 - name: Install Kubernetes
   become: true
@@ -1472,7 +1448,6 @@ c6c9a973eaf4   vodyakovdenis/diplom-app:v1.0   "/docker-entrypoint.…"   9 seco
 <details><summary>install helm</summary>
 
 * [оф дока](https://helm.sh/docs/intro/install/)
-* [Установка Prometheus в кластер с помощью Helm](https://selectel.ru/blog/tutorials/monitoring-in-k8s-with-prometheus/)
 
 ```bash
 $ curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
@@ -1544,7 +1519,75 @@ kubectl apply -f externalIP.yaml
 
 [externalIP.yaml](file/ingress-control/externalIP.yaml)
 
+![img6](img/img6.png)
+
+Документация по созданию [load_balancer](https://cloud.yandex.ru/ru/docs/application-load-balancer/quickstart)
+
 </details>
+
+<details><summary>* Используем metallb (если установка в локальной сети)</summary>
+
+Для начала необходимо проверить что включен режим IPVS
+
+```bash
+KUBE_EDITOR="nano" kubectl edit configmap -n kube-system kube-proxy
+```
+
+Установить значения:
+
+```bash
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+kind: KubeProxyConfiguration
+mode: "ipvs"
+ipvs:
+  strictARP: true
+```
+
+Устанавливаем metallb
+
+```bash
+kubectl create namespace metallb-system
+helm repo add metallb https://metallb.github.io/metallb
+helm install metallb metallb/metallb -n metallb-system
+kubectl apply -f metallb-ip.yaml
+```
+
+<details><summary>metallb-ip.yaml</summary>
+
+```bash
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: default
+  namespace: metallb-system
+spec:
+  addresses:
+  - 10.10.3.100-10.10.3.105
+
+kind: L2Advertisement
+metadata:
+  name: default
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+  - default
+  interfaces:
+  - eth0
+  - eth1
+```
+
+</details>
+
+**Вывод на локальном кластере:**
+
+```bash
+root@k8s-node1:/home/admlocal# kubectl -n ingress-nginx get svc
+NAME                                 TYPE           CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+ingress-nginx-controller             LoadBalancer   10.245.227.235   10.10.3.100   80:32360/TCP,443:32144/TCP   51m
+ingress-nginx-controller-admission   ClusterIP      10.245.253.213   <none>        443/TCP                      51m
+```
+
+![img7](img/img7.png)
 
 </details>
 
@@ -1554,19 +1597,40 @@ kubectl apply -f externalIP.yaml
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
 kubectl create namespace monitoring
-helm install kube-prom-stack prometheus-community/kube-prometheus-stack -n monitoring -f values.yaml
+helm install monitoring prometheus-community/kube-prometheus-stack -n monitoring -f values.yaml
 ```
 
 [values.yaml](file/monitoring/values.yaml)
 
 
-</details>
+```bash
+kubectl apply -f ingress.yaml
+```
 
-Открываем доступ к prometeus:
+[ingress.yaml](file/monitoring/ingress.yaml)
 
 ```bash
-
+root@k8s-node1:/home/ubuntu/monitoring# kubectl -n monitoring get ingress
+NAME                 CLASS   HOSTS                ADDRESS   PORTS   AGE
+kube-state-ingress   nginx   grafana.diplom.com             80      10s
 ```
+
+
+<details><summary>При ошибке : failed calling webhook</summary>
+
+```bash
+Error from server (InternalError): error when creating "ingress.yaml": Internal error occurred: failed calling webhook "validate.nginx.ingress.kubernetes.io": failed to call webhook: Post "https://ingress-nginx-controller-admission.ingress-nginx.svc:443/networking/v1/ingresses?timeout=10s": dial tcp 10.245.55.76:443: i/o timeout
+```
+
+Выполнить:
+
+```bash
+kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission
+```
+
+</details>
+
+</details>
 
 </details>
 
@@ -1588,12 +1652,12 @@ helm install kube-prom-stack prometheus-community/kube-prometheus-stack -n monit
 
 https://siebjee.nl/posts/ingress-nginx-context-deadline-exceeded/   
 https://cloud.yandex.ru/ru/docs/managed-kubernetes/tutorials/prometheus-grafana-monitoring   
+https://cloud.yandex.ru/ru/docs/application-load-balancer/quickstart   
 https://docs.nginx.com/nginx-ingress-controller/installation/installing-nic/installation-with-helm/   
 https://selectel.ru/blog/tutorials/monitoring-in-k8s-with-prometheus/   
 https://ru.stackoverflow.com/questions/931025/%D0%9D%D0%B5-%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%B0%D0%B5%D1%82-dns-kubernetes-%D0%B2%D0%BD%D1%83%D1%82%D1%80%D0%B8-%D0%BA%D0%BE%D0%BD%D1%82%D0%B5%D0%B9%D0%BD%D0%B5%D1%80%D0%BE%D0%B2
 https://kubernetes.io/ru/docs/reference/kubectl/cheatsheet/   
 https://helm.sh/ru/docs/intro/using_helm/   
 https://nixhub.ru/posts/k8s-cluster-access/   
-
 
 </details>
