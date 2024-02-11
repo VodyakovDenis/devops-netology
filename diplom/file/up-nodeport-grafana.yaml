@@ -1,0 +1,9 @@
+grafana:
+  ingress:
+    enabled: false 
+  service:
+    type: NodePort  
+    portName: http-web
+    nodePort: 30010  
+
+#helm upgrade monitoring prometheus-community/kube-prometheus-stack -n monitoring -f up-nodeport-grafana.yaml

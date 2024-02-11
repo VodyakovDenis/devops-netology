@@ -779,7 +779,7 @@ grafana:
     # hosts:
     #   - grafana.domain.com
     hosts:
-      - grafana-gw.my.to
+      - grafana.diplom.com
 
     ## Path for grafana ingress
     path: /

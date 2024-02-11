@@ -1239,6 +1239,25 @@ kubeadm join k8s-node1:6443 --token lo4zxy.s3yyostmigxsvu83 \
 
 ```
 
+```bash
+root@k8s-node1:/home/ubuntu# mkdir -p $HOME/.kube
+root@k8s-node1:/home/ubuntu# cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+root@k8s-node1:/home/ubuntu# chown $(id -u):$(id -g) $HOME/.kube/config
+root@k8s-node1:/home/ubuntu# export KUBECONFIG=/etc/kubernetes/admin.conf
+root@k8s-node1:/home/ubuntu# kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+namespace/kube-flannel created
+serviceaccount/flannel created
+clusterrole.rbac.authorization.k8s.io/flannel created
+clusterrolebinding.rbac.authorization.k8s.io/flannel created
+configmap/kube-flannel-cfg created
+daemonset.apps/kube-flannel-ds created
+root@k8s-node1:/home/ubuntu# kubectl get nodes -owide
+NAME        STATUS   ROLES           AGE     VERSION   INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+k8s-node1   Ready    control-plane   13m     v1.28.6   192.168.10.12   <none>        Ubuntu 20.04.4 LTS   5.4.0-124-generic   containerd://1.7.2
+k8s-node2   Ready    <none>          9m16s   v1.28.6   192.168.10.30   <none>        Ubuntu 20.04.4 LTS   5.4.0-124-generic   containerd://1.7.2
+k8s-node3   Ready    <none>          5m29s   v1.28.6   192.168.10.26   <none>        Ubuntu 20.04.4 LTS   5.4.0-124-generic   containerd://1.7.2
+```
+
 Дальше мы можем добавить еще одну контрол ноду если необходимо, но в рамках данного задания нам будет достаточно одной контрол ноды, по этому оставшиеся ноды добавляем как воркеры.
 
 ```bash
@@ -1270,33 +1289,6 @@ Run 'kubectl get nodes' on the control-plane to see this node join the cluster.
 
 ```
 
-Настраиваем control-node и добавляем [calico](https://github.com/projectcalico/calico):
-```bash
-root@k8s-node1:/home/ubuntu# mkdir -p $HOME/.kube
-root@k8s-node1:/home/ubuntu# cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-root@k8s-node1:/home/ubuntu# chown $(id -u):$(id -g) $HOME/.kube/config
-root@k8s-node1:/home/ubuntu# export KUBECONFIG=/etc/kubernetes/admin.conf
-root@k8s-node1:/home/ubuntu# kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/tigera-operator.yaml
-namespace/tigera-operator created
-...
-serviceaccount/tigera-operator created
-clusterrole.rbac.authorization.k8s.io/tigera-operator created
-clusterrolebinding.rbac.authorization.k8s.io/tigera-operator created
-deployment.apps/tigera-operator created
-root@k8s-node1:/home/ubuntu# curl https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/custom-resources.yaml -O
-  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
-                                 Dload  Upload   Total   Spent    Left  Speed
-100   824  100   824    0     0   2719      0 --:--:-- --:--:-- --:--:--  2719
-root@k8s-node1:/home/ubuntu# sed -i 's/cidr: 192\.168\.0\.0\/16/cidr: 10.244.0.0\/16/g' custom-resources.yaml
-root@k8s-node1:/home/ubuntu# kubectl create -f custom-resources.yaml
-installation.operator.tigera.io/default created
-apiserver.operator.tigera.io/default created
-root@k8s-node1:/home/ubuntu# kubectl get nodes -owide
-NAME        STATUS   ROLES           AGE     VERSION   INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
-k8s-node1   Ready    control-plane   13m     v1.28.6   192.168.10.12   <none>        Ubuntu 20.04.4 LTS   5.4.0-124-generic   containerd://1.7.2
-k8s-node2   Ready    <none>          9m16s   v1.28.6   192.168.10.30   <none>        Ubuntu 20.04.4 LTS   5.4.0-124-generic   containerd://1.7.2
-k8s-node3   Ready    <none>          5m29s   v1.28.6   192.168.10.26   <none>        Ubuntu 20.04.4 LTS   5.4.0-124-generic   containerd://1.7.2
-```
 
 Задаем роль воркеров:
 
@@ -1313,35 +1305,26 @@ k8s-node3   Ready    worker          7m8s   v1.28.6   192.168.10.26   <none>    
 
 ```
 
+
 </details>
 
 <details><summary>Итого</summary>
 
 ```bash
 root@k8s-node1:/home/ubuntu# kubectl get pods --all-namespaces
-NAMESPACE          NAME                                       READY   STATUS    RESTARTS   AGE
-calico-apiserver   calico-apiserver-66dfff9ccb-h4ghj          1/1     Running   0          2m42s
-calico-apiserver   calico-apiserver-66dfff9ccb-mns8m          1/1     Running   0          2m42s
-calico-system      calico-kube-controllers-7d57dcb56d-jw7jt   1/1     Running   0          3m46s
-calico-system      calico-node-bkspd                          1/1     Running   0          3m46s
-calico-system      calico-node-dns4r                          1/1     Running   0          3m46s
-calico-system      calico-node-hkr2m                          1/1     Running   0          3m46s
-calico-system      calico-typha-7b45dbb589-4nbcm              1/1     Running   0          3m38s
-calico-system      calico-typha-7b45dbb589-fxsmp              1/1     Running   0          3m47s
-calico-system      csi-node-driver-dckjx                      2/2     Running   0          3m46s
-calico-system      csi-node-driver-qrxrl                      2/2     Running   0          3m46s
-calico-system      csi-node-driver-v28ch                      2/2     Running   0          3m46s
-kube-system        coredns-5dd5756b68-dfktj                   1/1     Running   0          16m
-kube-system        coredns-5dd5756b68-xvwz9                   1/1     Running   0          16m
-kube-system        etcd-k8s-node1                             1/1     Running   0          16m
-kube-system        kube-apiserver-k8s-node1                   1/1     Running   0          16m
-kube-system        kube-controller-manager-k8s-node1          1/1     Running   0          16m
-kube-system        kube-proxy-2tgc6                           1/1     Running   0          12m
-kube-system        kube-proxy-q647f                           1/1     Running   0          16m
-kube-system        kube-proxy-t8vrz                           1/1     Running   0          8m22s
-kube-system        kube-scheduler-k8s-node1                   1/1     Running   0          16m
-tigera-operator    tigera-operator-94d7f7696-zvgl5            1/1     Running   0          4m27s
-
+NAMESPACE      NAME                                                     READY   STATUS    RESTARTS   AGE
+kube-flannel   kube-flannel-ds-dlmdn                                    1/1     Running   0          4m32s
+kube-flannel   kube-flannel-ds-fqnbd                                    1/1     Running   0          4m32s
+kube-flannel   kube-flannel-ds-s8pq7                                    1/1     Running   0          4m32s
+kube-system    coredns-5dd5756b68-gd4sh                                 1/1     Running   0          14m
+kube-system    coredns-5dd5756b68-m4276                                 1/1     Running   0          14m
+kube-system    etcd-k8s-node1                                           1/1     Running   0          14m
+kube-system    kube-apiserver-k8s-node1                                 1/1     Running   0          14m
+kube-system    kube-controller-manager-k8s-node1                        1/1     Running   0          14m
+kube-system    kube-proxy-2c5xv                                         1/1     Running   0          14m
+kube-system    kube-proxy-6pf6m                                         1/1     Running   0          14m
+kube-system    kube-proxy-f87n9                                         1/1     Running   0          14m
+kube-system    kube-scheduler-k8s-node1                                 1/1     Running   0          14m
 ```
 
 </details>
@@ -1355,27 +1338,18 @@ denis@denis-lin(0):~$ sudo nano /etc/hosts
 [sudo] password for denis:
 denis@denis-lin(0):~$ kubectl get pods --all-namespaces
 NAMESPACE          NAME                                       READY   STATUS    RESTARTS   AGE
-calico-apiserver   calico-apiserver-66dfff9ccb-h4ghj          1/1     Running   0          12m
-calico-apiserver   calico-apiserver-66dfff9ccb-mns8m          1/1     Running   0          12m
-calico-system      calico-kube-controllers-7d57dcb56d-jw7jt   1/1     Running   0          13m
-calico-system      calico-node-bkspd                          1/1     Running   0          13m
-calico-system      calico-node-dns4r                          1/1     Running   0          13m
-calico-system      calico-node-hkr2m                          1/1     Running   0          13m
-calico-system      calico-typha-7b45dbb589-4nbcm              1/1     Running   0          13m
-calico-system      calico-typha-7b45dbb589-fxsmp              1/1     Running   0          13m
-calico-system      csi-node-driver-dckjx                      2/2     Running   0          13m
-calico-system      csi-node-driver-qrxrl                      2/2     Running   0          13m
-calico-system      csi-node-driver-v28ch                      2/2     Running   0          13m
-kube-system        coredns-5dd5756b68-dfktj                   1/1     Running   0          25m
-kube-system        coredns-5dd5756b68-xvwz9                   1/1     Running   0          25m
-kube-system        etcd-k8s-node1                             1/1     Running   0          25m
-kube-system        kube-apiserver-k8s-node1                   1/1     Running   0          25m
-kube-system        kube-controller-manager-k8s-node1          1/1     Running   0          25m
-kube-system        kube-proxy-2tgc6                           1/1     Running   0          21m
-kube-system        kube-proxy-q647f                           1/1     Running   0          25m
-kube-system        kube-proxy-t8vrz                           1/1     Running   0          17m
-kube-system        kube-scheduler-k8s-node1                   1/1     Running   0          26m
-tigera-operator    tigera-operator-94d7f7696-zvgl5            1/1     Running   0          13m
+kube-flannel   kube-flannel-ds-dlmdn                                    1/1     Running   0          15m42s
+kube-flannel   kube-flannel-ds-fqnbd                                    1/1     Running   0          15m42s
+kube-flannel   kube-flannel-ds-s8pq7                                    1/1     Running   0          15m42s
+kube-system    coredns-5dd5756b68-gd4sh                                 1/1     Running   0          25m
+kube-system    coredns-5dd5756b68-m4276                                 1/1     Running   0          25m
+kube-system    etcd-k8s-node1                                           1/1     Running   0          25m
+kube-system    kube-apiserver-k8s-node1                                 1/1     Running   0          25m
+kube-system    kube-controller-manager-k8s-node1                        1/1     Running   0          25m
+kube-system    kube-proxy-2c5xv                                         1/1     Running   0          25m
+kube-system    kube-proxy-6pf6m                                         1/1     Running   0          25m
+kube-system    kube-proxy-f87n9                                         1/1     Running   0          25m
+kube-system    kube-scheduler-k8s-node1                                 1/1     Running   0          25m
 
 ```
 
@@ -1450,9 +1424,9 @@ c6c9a973eaf4   vodyakovdenis/diplom-app:v1.0   "/docker-entrypoint.…"   9 seco
 * [оф дока](https://helm.sh/docs/intro/install/)
 
 ```bash
-$ curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-$ chmod 700 get_helm.sh
-$ ./get_helm.sh
+curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 && \
+chmod 700 get_helm.sh && \
+./get_helm.sh
 ```
 
 </details>
@@ -1465,11 +1439,11 @@ helm upgrade --install ingress-nginx ingress-nginx \
 --namespace ingress-nginx --create-namespace
 ```
 
-Обязательно не забываем "[пропатчить](https://docs.nginx.com/nginx-ingress-controller/installation/installing-nic/installation-with-helm/)" 
+Иногда необходимо "[пропатчить](https://docs.nginx.com/nginx-ingress-controller/installation/installing-nic/installation-with-helm/)" 
 
 ```bash
-helm pull oci://ghcr.io/nginxinc/charts/nginx-ingress --untar --version 1.1.2
-cd nginx-ingress
+helm pull oci://ghcr.io/nginxinc/charts/nginx-ingress --untar --version 1.1.2 && \
+cd nginx-ingress && \
 kubectl apply -f crds/
 ```
 
@@ -1507,21 +1481,43 @@ PING ya.ru (5.255.255.242) 56(84) bytes of data.
 
 </details>
 
-<details><summary>* Если нет EXTERNAL-IP (на яндексе)</summary>
+<details><summary>EXTERNAL-IP (на яндексе)</summary>
 
 Арендуем IP у Яндекса
 
 ![img5](img/img5.png)
 
+![img5_1](img/img5_1.png)
+
+```bash
+KUBE_EDITOR="nano" kubectl edit configmap -n kube-system kube-proxy
+```
+
+Установить значения:
+
+```bash
+apiVersion: kubeproxy.config.k8s.io/v1alpha1
+kind: KubeProxyConfiguration
+mode: "ipvs"
+ipvs:
+  strictARP: true
+```
+
 ```bash
 kubectl apply -f externalIP.yaml
 ```
-
 [externalIP.yaml](file/ingress-control/externalIP.yaml)
 
-![img6](img/img6.png)
+```bash
+root@k8s-node1:/home/ubuntu# kubectl -n ingress-nginx get svc
+NAME                                 TYPE           CLUSTER-IP       EXTERNAL-IP      PORT(S)                      AGE
+ingress-nginx-controller             LoadBalancer   10.245.246.172   158.160.52.151   80:32278/TCP,443:31163/TCP   83m
+ingress-nginx-controller-admission   ClusterIP      10.245.212.160   <none>           443/TCP                      83m
 
-Документация по созданию [load_balancer](https://cloud.yandex.ru/ru/docs/application-load-balancer/quickstart)
+```
+
+
+![img6](img/img6.png)
 
 </details>
 
@@ -1604,17 +1600,23 @@ helm install monitoring prometheus-community/kube-prometheus-stack -n monitoring
 
 
 ```bash
-kubectl apply -f ingress.yaml
-```
-
-[ingress.yaml](file/monitoring/ingress.yaml)
-
-```bash
 root@k8s-node1:/home/ubuntu/monitoring# kubectl -n monitoring get ingress
 NAME                 CLASS   HOSTS                ADDRESS   PORTS   AGE
 kube-state-ingress   nginx   grafana.diplom.com             80      10s
 ```
 
+```
+login: admin
+password: prom-operator
+```
+
+![grafana1](img/grafana1.png)
+
+
+![grafana2](img/grafana2.png)
+
+
+![grafana3](img/grafana3.png)
 
 <details><summary>При ошибке : failed calling webhook</summary>
 
@@ -1632,15 +1634,6 @@ kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission
 
 </details>
 
-</details>
-
-<details><summary>***</summary>
-
-```bash
-
-```
-
-</details>
 
 ---
 ## Установка и настройка CI/CD
