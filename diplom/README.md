@@ -1025,6 +1025,8 @@ denis@denis-lin(0):~/netology/diplom$ cat cluster_ips.ini
 
 <details><summary>ansible k8s</summary>
 
+[Репозиторий](https://github.com/VodyakovDenis/diplom-ansible)
+
 ---
 
 <details><summary>ansible/ansible.cfg</summary>
@@ -2968,8 +2970,21 @@ diplom-app   nginx   denis.diplom.com   158.160.52.151   80      2m25s
 
 ---
 
+**Комментарии:**   
 
-<details><summary>* Полезные ссылки</summary>
+* Http доступ к тестовому приложению - выполнен через ci/cd в последнем разделе
+* Для запуска ci/cd терраформ использовался раннер запущенный на VM (создан там-же в прошлых ДЗ)
+* Для запуска ci/cd по публикации веб странички использовался раннер запущенный внутри K8S
+
+**Список репозиториев собранные на github:**
+
+- [diplom-app](https://github.com/VodyakovDenis/diplom-app)   
+- [diplom-terraform](https://github.com/VodyakovDenis/diplom-terraform)
+- [diplom-site](https://github.com/VodyakovDenis/diplom-site)
+- [diplom-ansible](https://github.com/VodyakovDenis/diplom-ansible)
+
+
+<details><summary>* Полезные ссылки которые пригодились</summary>
 
 https://siebjee.nl/posts/ingress-nginx-context-deadline-exceeded/   
 https://cloud.yandex.ru/ru/docs/managed-kubernetes/tutorials/prometheus-grafana-monitoring   
