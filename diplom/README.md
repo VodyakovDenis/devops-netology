@@ -1,8 +1,21 @@
 # Дипломная работа
+
+> ## Цели:
+> 1. Подготовить облачную инфраструктуру на базе облачного провайдера Яндекс.Облако.
+> 2. Запустить и сконфигурировать Kubernetes кластер.
+> 3. Установить и настроить систему мониторинга.
+> 4. Настроить и автоматизировать сборку тестового приложения с использованием Docker-контейнеров.
+> 5. Настроить CI для автоматической сборки и тестирования.
+> 6. Настроить CD для автоматического развёртывания приложения.
+
 ---
 ## Этапы выполнения:
 
 ### Создание облачной инфраструктуры
+
+>**Ожидаемые результаты:**
+> 1. Terraform сконфигурирован и создание инфраструктуры посредством Terraform возможно без дополнительных ручных действий.
+> 3. Полученная конфигурация инфраструктуры является предварительной, поэтому в ходе дальнейшего выполнения задания возможны изменения.
 
 Предварительная настройка включает в себя несколько шагов, необходимых для последующей работы с yandex.cloud через terraform.    
 * Установить утилиту **yc** и подключится к облаку.   
@@ -12,7 +25,7 @@
 
 <details><summary>Пример</summary>
 
-### Установка [yc](https://cloud.yandex.ru/ru/docs/cli/quickstart) 
+**Установка** [yc](https://cloud.yandex.ru/ru/docs/cli/quickstart) 
 
 * Ответы на вопросы и порядок работы довольно не плохо описан в статье: [Начало работы с Terraform](https://cloud.yandex.ru/ru/docs/tutorials/infrastructure-management/terraform-quickstart)
 
@@ -20,7 +33,7 @@
 curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
 ```
 
-### Создание сервисного аккаунта с ролью editor на дефолтной директории облака
+**Создание сервисного аккаунта с ролью editor на дефолтной директории облака**
 
 ```bash
 yc iam service-account create --name terraform-acc
@@ -28,19 +41,19 @@ yc resource-manager folder add-access-binding --name default --role editor --sub
 ```
 * accId - это уникальный идентификатор нового сервисного аккаунта
 
-### Получаем ключ доступа для данного сервисного аккаунта
+**Получаем ключ доступа для данного сервисного аккаунта**
 
 ```bash
 yc iam access-key create --service-account-name terraform-acc --format=json
 ```
 
-### Создание s3-bucket для хранения состояния terraform
+**Создание s3-bucket для хранения состояния terraform**
 
 ```bash
 yc storage bucket create --name=netology-state
 ```
 
-### Инициализация terraform
+**Инициализация terraform**
 
 ```bash
 terraform init \
@@ -51,7 +64,7 @@ terraform init \
 ```
 * где **service_account_key_id** и **service_account_secret_key** данные полученные на шаге получения ключа доступа для сервисного аккаунта
 
-### Создание и переключение на новый workspace
+**Создание и переключение на новый workspace**
 
 ```bash
 terraform workspace new diplom
@@ -60,9 +73,7 @@ terraform workspace new diplom
 Данные шаги мной выполнялись в ручную. 
 </details>
     
----
-
-## Создание VPC и подсетей через terraform
+**Решение: Создание VPC и подсетей через terraform**
 
 <details><summary>network.tf</summary>
 
@@ -305,7 +316,15 @@ Destroy complete! Resources: 3 destroyed.
 </details>
 
 ---
+
 ## Создание Kubernetes кластера
+
+> **Ожидаемый результат:**
+> 1. Работоспособный Kubernetes кластер.
+> 2. В файле ~/.kube/config находятся данные для доступа к кластеру.
+> 3. Команда kubectl get pods --all-namespaces отрабатывает без ошибок.
+
+
 
 За основу возьмем минимальную конфигурацию.
 
@@ -1251,11 +1270,6 @@ clusterrole.rbac.authorization.k8s.io/flannel created
 clusterrolebinding.rbac.authorization.k8s.io/flannel created
 configmap/kube-flannel-cfg created
 daemonset.apps/kube-flannel-ds created
-root@k8s-node1:/home/ubuntu# kubectl get nodes -owide
-NAME        STATUS   ROLES           AGE     VERSION   INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
-k8s-node1   Ready    control-plane   13m     v1.28.6   192.168.10.12   <none>        Ubuntu 20.04.4 LTS   5.4.0-124-generic   containerd://1.7.2
-k8s-node2   Ready    <none>          9m16s   v1.28.6   192.168.10.30   <none>        Ubuntu 20.04.4 LTS   5.4.0-124-generic   containerd://1.7.2
-k8s-node3   Ready    <none>          5m29s   v1.28.6   192.168.10.26   <none>        Ubuntu 20.04.4 LTS   5.4.0-124-generic   containerd://1.7.2
 ```
 
 Дальше мы можем добавить еще одну контрол ноду если необходимо, но в рамках данного задания нам будет достаточно одной контрол ноды, по этому оставшиеся ноды добавляем как воркеры.
@@ -1289,6 +1303,13 @@ Run 'kubectl get nodes' on the control-plane to see this node join the cluster.
 
 ```
 
+```bash
+root@k8s-node1:/home/ubuntu# kubectl get nodes -owide
+NAME        STATUS   ROLES           AGE     VERSION   INTERNAL-IP     EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
+k8s-node1   Ready    control-plane   13m     v1.28.6   192.168.10.12   <none>        Ubuntu 20.04.4 LTS   5.4.0-124-generic   containerd://1.7.2
+k8s-node2   Ready    <none>          9m16s   v1.28.6   192.168.10.30   <none>        Ubuntu 20.04.4 LTS   5.4.0-124-generic   containerd://1.7.2
+k8s-node3   Ready    <none>          5m29s   v1.28.6   192.168.10.26   <none>        Ubuntu 20.04.4 LTS   5.4.0-124-generic   containerd://1.7.2
+```
 
 Задаем роль воркеров:
 
@@ -1312,19 +1333,20 @@ k8s-node3   Ready    worker          7m8s   v1.28.6   192.168.10.26   <none>    
 
 ```bash
 root@k8s-node1:/home/ubuntu# kubectl get pods --all-namespaces
-NAMESPACE      NAME                                                     READY   STATUS    RESTARTS   AGE
-kube-flannel   kube-flannel-ds-dlmdn                                    1/1     Running   0          4m32s
-kube-flannel   kube-flannel-ds-fqnbd                                    1/1     Running   0          4m32s
-kube-flannel   kube-flannel-ds-s8pq7                                    1/1     Running   0          4m32s
-kube-system    coredns-5dd5756b68-gd4sh                                 1/1     Running   0          14m
-kube-system    coredns-5dd5756b68-m4276                                 1/1     Running   0          14m
-kube-system    etcd-k8s-node1                                           1/1     Running   0          14m
-kube-system    kube-apiserver-k8s-node1                                 1/1     Running   0          14m
-kube-system    kube-controller-manager-k8s-node1                        1/1     Running   0          14m
-kube-system    kube-proxy-2c5xv                                         1/1     Running   0          14m
-kube-system    kube-proxy-6pf6m                                         1/1     Running   0          14m
-kube-system    kube-proxy-f87n9                                         1/1     Running   0          14m
-kube-system    kube-scheduler-k8s-node1                                 1/1     Running   0          14m
+NAMESPACE      NAME                                READY   STATUS    RESTARTS   AGE
+kube-flannel   kube-flannel-ds-v59jh               1/1     Running   0          2m15s
+kube-flannel   kube-flannel-ds-v7jnm               1/1     Running   0          82s
+kube-flannel   kube-flannel-ds-v8jhz               1/1     Running   0          96s
+kube-system    coredns-5dd5756b68-78xx5            1/1     Running   0          2m52s
+kube-system    coredns-5dd5756b68-7nhcx            1/1     Running   0          2m52s
+kube-system    etcd-k8s-node1                      1/1     Running   0          3m5s
+kube-system    kube-apiserver-k8s-node1            1/1     Running   0          3m5s
+kube-system    kube-controller-manager-k8s-node1   1/1     Running   0          3m5s
+kube-system    kube-proxy-2l5c6                    1/1     Running   0          82s
+kube-system    kube-proxy-nvh7g                    1/1     Running   0          2m52s
+kube-system    kube-proxy-qklbt                    1/1     Running   0          96s
+kube-system    kube-scheduler-k8s-node1            1/1     Running   0          3m5s
+
 ```
 
 </details>
@@ -1337,19 +1359,20 @@ denis@denis-lin(0):~$ nano $HOME/.kube/config
 denis@denis-lin(0):~$ sudo nano /etc/hosts
 [sudo] password for denis:
 denis@denis-lin(0):~$ kubectl get pods --all-namespaces
-NAMESPACE          NAME                                       READY   STATUS    RESTARTS   AGE
-kube-flannel   kube-flannel-ds-dlmdn                                    1/1     Running   0          15m42s
-kube-flannel   kube-flannel-ds-fqnbd                                    1/1     Running   0          15m42s
-kube-flannel   kube-flannel-ds-s8pq7                                    1/1     Running   0          15m42s
-kube-system    coredns-5dd5756b68-gd4sh                                 1/1     Running   0          25m
-kube-system    coredns-5dd5756b68-m4276                                 1/1     Running   0          25m
-kube-system    etcd-k8s-node1                                           1/1     Running   0          25m
-kube-system    kube-apiserver-k8s-node1                                 1/1     Running   0          25m
-kube-system    kube-controller-manager-k8s-node1                        1/1     Running   0          25m
-kube-system    kube-proxy-2c5xv                                         1/1     Running   0          25m
-kube-system    kube-proxy-6pf6m                                         1/1     Running   0          25m
-kube-system    kube-proxy-f87n9                                         1/1     Running   0          25m
-kube-system    kube-scheduler-k8s-node1                                 1/1     Running   0          25m
+NAMESPACE      NAME                                READY   STATUS    RESTARTS   AGE
+kube-flannel   kube-flannel-ds-v59jh               1/1     Running   0          3m52s
+kube-flannel   kube-flannel-ds-v7jnm               1/1     Running   0          2m59s
+kube-flannel   kube-flannel-ds-v8jhz               1/1     Running   0          3m13s
+kube-system    coredns-5dd5756b68-78xx5            1/1     Running   0          4m29s
+kube-system    coredns-5dd5756b68-7nhcx            1/1     Running   0          4m29s
+kube-system    etcd-k8s-node1                      1/1     Running   0          4m42s
+kube-system    kube-apiserver-k8s-node1            1/1     Running   0          4m42s
+kube-system    kube-controller-manager-k8s-node1   1/1     Running   0          4m42s
+kube-system    kube-proxy-2l5c6                    1/1     Running   0          2m59s
+kube-system    kube-proxy-nvh7g                    1/1     Running   0          4m29s
+kube-system    kube-proxy-qklbt                    1/1     Running   0          3m13s
+kube-system    kube-scheduler-k8s-node1            1/1     Running   0          4m42s
+
 
 ```
 
@@ -1358,6 +1381,11 @@ kube-system    kube-scheduler-k8s-node1                                 1/1     
 
 ---
 ## Создание тестового приложения
+
+> **Ожидаемый результат:**
+> 1. Git репозиторий с тестовым приложением и Dockerfile.
+> 2. Регистри с собранным docker image. В качестве регистри может быть DockerHub или Yandex Container Registry, созданный также с помощью terraform.
+
 
 Репозиторий git [diplom-app](https://github.com/VodyakovDenis/diplom-app)   
 Репозиторий docker hub [diplom-app](https://hub.docker.com/repository/docker/vodyakovdenis/diplom-app/general)   
@@ -1418,6 +1446,15 @@ c6c9a973eaf4   vodyakovdenis/diplom-app:v1.0   "/docker-entrypoint.…"   9 seco
 ---
 ## Подготовка cистемы мониторинга и деплой приложения
 
+> **Цель:**
+> 1. Задеплоить в кластер prometheus, grafana, alertmanager, экспортер основных метрик Kubernetes.   
+> 2. Задеплоить тестовое приложение, например, nginx сервер отдающий статическую страницу.   
+>  
+> **Ожидаемый результат:**
+> 1. Git репозиторий с конфигурационными файлами для настройки Kubernetes.
+> 2. Http доступ к web интерфейсу grafana.
+> 3. Дашборды в grafana отображающие состояние Kubernetes кластера.
+> 4. Http доступ к тестовому приложению.
 
 <details><summary>install helm</summary>
 
@@ -1445,38 +1482,6 @@ helm upgrade --install ingress-nginx ingress-nginx \
 helm pull oci://ghcr.io/nginxinc/charts/nginx-ingress --untar --version 1.1.2 && \
 cd nginx-ingress && \
 kubectl apply -f crds/
-```
-
-</details>
-
-<details><summary>* Если вдруг проблема с DNS</summary>
-
-накаждой ноде нужно:
-```bash
-systemctl mask firewald
-```
-
-затем самое просто грохнуть кор-днс
-```bash
-kubectl delete pods -n kube-system -l k8s-app=kube-dns
-```
-
-проверяем что новые поднялись:
-```bash
-kubectl get pods -n kube-system -l k8s-app=kube-dns
-```
-
-для тестов можем поднять dnsutils под
-```bash
-kubectl apply -f https://k8s.io/examples/admin/dns/dnsutils.yaml
-```
-
-и увидем:
-```bash
-root@dnsutils:/# ping ya.ru
-PING ya.ru (5.255.255.242) 56(84) bytes of data.
-64 bytes from ya.ru (5.255.255.242): icmp_seq=1 ttl=248 time=1.17 ms
-64 bytes from ya.ru (5.255.255.242): icmp_seq=2 ttl=248 time=0.451 ms
 ```
 
 </details>
@@ -1520,6 +1525,86 @@ ingress-nginx-controller-admission   ClusterIP      10.245.212.160   <none>     
 ![img6](img/img6.png)
 
 </details>
+
+<details><summary>install prometheus + grafana</summary>
+
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+kubectl create namespace monitoring
+helm install monitoring prometheus-community/kube-prometheus-stack -n monitoring -f values.yaml
+```
+
+[values.yaml](file/monitoring/values.yaml)
+
+
+```bash
+root@k8s-node1:/home/ubuntu/monitoring# kubectl -n monitoring get ingress
+NAME                 CLASS   HOSTS                ADDRESS   PORTS   AGE
+kube-state-ingress   nginx   grafana.diplom.com             80      10s
+```
+
+```
+login: admin
+password: prom-operator
+```
+
+![grafana1](img/grafana1.png)
+
+
+![grafana2](img/grafana2.png)
+
+
+![grafana3](img/grafana3.png)
+
+<details><summary>* При ошибке : failed calling webhook</summary>
+
+```bash
+Error from server (InternalError): error when creating "ingress.yaml": Internal error occurred: failed calling webhook "validate.nginx.ingress.kubernetes.io": failed to call webhook: Post "https://ingress-nginx-controller-admission.ingress-nginx.svc:443/networking/v1/ingresses?timeout=10s": dial tcp 10.245.55.76:443: i/o timeout
+```
+
+Выполнить:
+
+```bash
+kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission
+```
+
+</details>
+
+</details>
+
+<details><summary>* Если вдруг проблема с DNS</summary>
+
+накаждой ноде нужно:
+```bash
+systemctl mask firewald
+```
+
+затем самое просто грохнуть кор-днс
+```bash
+kubectl delete pods -n kube-system -l k8s-app=kube-dns
+```
+
+проверяем что новые поднялись:
+```bash
+kubectl get pods -n kube-system -l k8s-app=kube-dns
+```
+
+для тестов можем поднять dnsutils под
+```bash
+kubectl apply -f https://k8s.io/examples/admin/dns/dnsutils.yaml
+```
+
+и увидем:
+```bash
+root@dnsutils:/# ping ya.ru
+PING ya.ru (5.255.255.242) 56(84) bytes of data.
+64 bytes from ya.ru (5.255.255.242): icmp_seq=1 ttl=248 time=1.17 ms
+64 bytes from ya.ru (5.255.255.242): icmp_seq=2 ttl=248 time=0.451 ms
+```
+
+</details>
+
 
 <details><summary>* Используем metallb (если установка в локальной сети)</summary>
 
@@ -1587,59 +1672,1302 @@ ingress-nginx-controller-admission   ClusterIP      10.245.253.213   <none>     
 
 </details>
 
-<details><summary>install prometheus + grafana</summary>
-
-```bash
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo update
-kubectl create namespace monitoring
-helm install monitoring prometheus-community/kube-prometheus-stack -n monitoring -f values.yaml
-```
-
-[values.yaml](file/monitoring/values.yaml)
-
-
-```bash
-root@k8s-node1:/home/ubuntu/monitoring# kubectl -n monitoring get ingress
-NAME                 CLASS   HOSTS                ADDRESS   PORTS   AGE
-kube-state-ingress   nginx   grafana.diplom.com             80      10s
-```
-
-```
-login: admin
-password: prom-operator
-```
-
-![grafana1](img/grafana1.png)
-
-
-![grafana2](img/grafana2.png)
-
-
-![grafana3](img/grafana3.png)
-
-<details><summary>При ошибке : failed calling webhook</summary>
-
-```bash
-Error from server (InternalError): error when creating "ingress.yaml": Internal error occurred: failed calling webhook "validate.nginx.ingress.kubernetes.io": failed to call webhook: Post "https://ingress-nginx-controller-admission.ingress-nginx.svc:443/networking/v1/ingresses?timeout=10s": dial tcp 10.245.55.76:443: i/o timeout
-```
-
-Выполнить:
-
-```bash
-kubectl delete -A ValidatingWebhookConfiguration ingress-nginx-admission
-```
-
-</details>
-
-</details>
-
 
 ---
 ## Установка и настройка CI/CD
 
+> **Цель:**
+> 1. Автоматическая сборка docker образа при коммите в репозиторий с тестовым приложением.   
+> 2. Автоматический деплой нового docker образа.   
+> Можно использовать teamcity, jenkins, GitLab CI или GitHub Actions.   
+>
+> **Ожидаемый результат:**
+> 1. Интерфейс ci/cd сервиса доступен по http.
+> 2. При любом коммите в репозиторие с тестовым приложением происходит сборка и отправка в регистр Docker образа.
+> 3. При создании тега (например, v1.0.0) происходит сборка и отправка с соответствующим label в регистри, а также деплой соответствующего Docker образа в кластер Kubernetes.
+
+В качестве CI/CD будет использоваться гитлаб развернутый в одной из домашних работ (доступ может быть ограничен):
+
+Репозиторий с ci/cd для gitlab (расположен на github) - [diplom-terraform](https://github.com/VodyakovDenis/diplom-terraform)
+
+Ссылка на проект на внутреннет [gitlab](https://gitlab.it-git.ru/test/diplom-terraform)
+
+<details><summary>Применение CI-CD-terraform pipeline</summary>
+
+![tf1](img/tf1.png)
+
+![tf6](img/tf6.png)
+
+<details><summary>validate</summary>
+
+[raw](https://gitlab.it-git.ru/test/diplom-terraform/-/jobs/328/raw)
+
+```txt
+[0KRunning with gitlab-runner 16.2.1 (674e0e29)[0;m
+[0K  on gitlab-runner-1 GvwJgJtvC, system ID: s_3b0069d0acea[0;m
+section_start:1708003106:prepare_executor
+[0K[0K[36;1mPreparing the "docker" executor[0;m[0;m
+[0KUsing Docker executor with image hashicorp/terraform:light ...[0;m
+[0KPulling docker image hashicorp/terraform:light ...[0;m
+[0KUsing docker image sha256:22ae929e925c6bdb60846c05fbee4f15ef15bd02d101e23f34dd6be69cace0f3 for hashicorp/terraform:light with digest hashicorp/terraform@sha256:2734886211a482abaff7efbbfd8bdb32295c9c35dda124092d46f39b69f47c42 ...[0;m
+section_end:1708003113:prepare_executor
+[0Ksection_start:1708003113:prepare_script
+[0K[0K[36;1mPreparing environment[0;m[0;m
+Running on runner-gvwjgjtvc-project-3-concurrent-0 via gitlab-runner-1...
+section_end:1708003114:prepare_script
+[0Ksection_start:1708003114:get_sources
+[0K[0K[36;1mGetting source from Git repository[0;m[0;m
+[32;1mFetching changes with git depth set to 20...[0;m
+Reinitialized existing Git repository in /builds/test/diplom-terraform/.git/
+[32;1mChecking out f7372221 as detached HEAD (ref is main)...[0;m
+Removing .terraform.lock.hcl
+Removing .terraform/
+
+[32;1mSkipping Git submodules setup[0;m
+section_end:1708003117:get_sources
+[0Ksection_start:1708003117:step_script
+[0K[0K[36;1mExecuting "step_script" stage of the job script[0;m[0;m
+[0KUsing docker image sha256:22ae929e925c6bdb60846c05fbee4f15ef15bd02d101e23f34dd6be69cace0f3 for hashicorp/terraform:light with digest hashicorp/terraform@sha256:2734886211a482abaff7efbbfd8bdb32295c9c35dda124092d46f39b69f47c42 ...[0;m
+[32;1m$ cp .terraformrc /root/.terraformrc[0;m
+[32;1m$ rm -rf .terraform[0;m
+[32;1m$ terraform --version[0;m
+Terraform v1.4.2
+on linux_amd64
+
+Your version of Terraform is out of date! The latest version
+is 1.7.3. You can update by downloading from https://www.terraform.io/downloads.html
+[32;1m$ export GITLAB_ACCESS_TOKEN=$GITLAB_TOCKEN[0;m
+[32;1m$ sed -i "s/__TOKEN__/$TOKEN/" variables.tf[0;m
+[32;1m$ terraform init[0;m
+
+[0m[1mInitializing the backend...[0m
+[0m[32m
+Successfully configured the backend "http"! Terraform will automatically
+use this backend unless the backend configuration changes.[0m
+
+[0m[1mInitializing provider plugins...[0m
+- Finding latest version of yandex-cloud/yandex...
+- Finding latest version of hashicorp/random...
+- Installing yandex-cloud/yandex v0.108.0...
+- Installed yandex-cloud/yandex v0.108.0 (unauthenticated)
+- Installing hashicorp/random v3.6.0...
+- Installed hashicorp/random v3.6.0 (unauthenticated)
+
+Terraform has created a lock file [1m.terraform.lock.hcl[0m to record the provider
+selections it made above. Include this file in your version control repository
+so that Terraform can guarantee to make the same selections by default when
+you run "terraform init" in the future.[0m
+
+[33m[33m╷[0m[0m
+[33m│[0m [0m[1m[33mWarning: [0m[0m[1mIncomplete lock file information for providers[0m
+[33m│[0m [0m
+[33m│[0m [0m[0mDue to your customized provider installation methods, Terraform was forced
+[33m│[0m [0mto calculate lock file checksums locally for the following providers:
+[33m│[0m [0m  - hashicorp/random
+[33m│[0m [0m  - yandex-cloud/yandex
+[33m│[0m [0m
+[33m│[0m [0mThe current .terraform.lock.hcl file only includes checksums for
+[33m│[0m [0mlinux_amd64, so Terraform running on another platform will fail to install
+[33m│[0m [0mthese providers.
+[33m│[0m [0m
+[33m│[0m [0mTo calculate additional checksums for another platform, run:
+[33m│[0m [0m  terraform providers lock -platform=linux_amd64
+[33m│[0m [0m(where linux_amd64 is the platform to generate)
+[33m╵[0m[0m
+[0m[0m
+[0m[1m[32mTerraform has been successfully initialized![0m[32m[0m
+[0m[32m
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.[0m
+[32;1m$ terraform validate[0;m
+[32m[1mSuccess![0m The configuration is valid.
+[0m
+section_end:1708003130:step_script
+[0Ksection_start:1708003130:cleanup_file_variables
+[0K[0K[36;1mCleaning up project directory and file based variables[0;m[0;m
+section_end:1708003131:cleanup_file_variables
+[0K[32;1mJob succeeded[0;m
+
+```
+
+</details>
+
+<details><summary>plan</summary>
+
+[raw](https://gitlab.it-git.ru/test/diplom-terraform/-/jobs/329/raw)
+
+```txt
+[0KRunning with gitlab-runner 16.2.1 (674e0e29)[0;m
+[0K  on gitlab-runner-1 GvwJgJtvC, system ID: s_3b0069d0acea[0;m
+section_start:1708003135:prepare_executor
+[0K[0K[36;1mPreparing the "docker" executor[0;m[0;m
+[0KUsing Docker executor with image hashicorp/terraform:light ...[0;m
+[0KPulling docker image hashicorp/terraform:light ...[0;m
+[0KUsing docker image sha256:22ae929e925c6bdb60846c05fbee4f15ef15bd02d101e23f34dd6be69cace0f3 for hashicorp/terraform:light with digest hashicorp/terraform@sha256:2734886211a482abaff7efbbfd8bdb32295c9c35dda124092d46f39b69f47c42 ...[0;m
+section_end:1708003141:prepare_executor
+[0Ksection_start:1708003141:prepare_script
+[0K[0K[36;1mPreparing environment[0;m[0;m
+Running on runner-gvwjgjtvc-project-3-concurrent-0 via gitlab-runner-1...
+section_end:1708003142:prepare_script
+[0Ksection_start:1708003142:get_sources
+[0K[0K[36;1mGetting source from Git repository[0;m[0;m
+[32;1mFetching changes with git depth set to 20...[0;m
+Reinitialized existing Git repository in /builds/test/diplom-terraform/.git/
+[32;1mChecking out f7372221 as detached HEAD (ref is main)...[0;m
+Removing .terraform.lock.hcl
+Removing .terraform/
+
+[32;1mSkipping Git submodules setup[0;m
+section_end:1708003143:get_sources
+[0Ksection_start:1708003143:step_script
+[0K[0K[36;1mExecuting "step_script" stage of the job script[0;m[0;m
+[0KUsing docker image sha256:22ae929e925c6bdb60846c05fbee4f15ef15bd02d101e23f34dd6be69cace0f3 for hashicorp/terraform:light with digest hashicorp/terraform@sha256:2734886211a482abaff7efbbfd8bdb32295c9c35dda124092d46f39b69f47c42 ...[0;m
+[32;1m$ cp .terraformrc /root/.terraformrc[0;m
+[32;1m$ rm -rf .terraform[0;m
+[32;1m$ terraform --version[0;m
+Terraform v1.4.2
+on linux_amd64
+
+Your version of Terraform is out of date! The latest version
+is 1.7.3. You can update by downloading from https://www.terraform.io/downloads.html
+[32;1m$ export GITLAB_ACCESS_TOKEN=$GITLAB_TOCKEN[0;m
+[32;1m$ sed -i "s/__TOKEN__/$TOKEN/" variables.tf[0;m
+[32;1m$ terraform init[0;m
+
+[0m[1mInitializing the backend...[0m
+[0m[32m
+Successfully configured the backend "http"! Terraform will automatically
+use this backend unless the backend configuration changes.[0m
+
+[0m[1mInitializing provider plugins...[0m
+- Finding latest version of yandex-cloud/yandex...
+- Finding latest version of hashicorp/random...
+- Installing yandex-cloud/yandex v0.108.0...
+- Installed yandex-cloud/yandex v0.108.0 (unauthenticated)
+- Installing hashicorp/random v3.6.0...
+- Installed hashicorp/random v3.6.0 (unauthenticated)
+
+Terraform has created a lock file [1m.terraform.lock.hcl[0m to record the provider
+selections it made above. Include this file in your version control repository
+so that Terraform can guarantee to make the same selections by default when
+you run "terraform init" in the future.[0m
+
+[33m[33m╷[0m[0m
+[33m│[0m [0m[1m[33mWarning: [0m[0m[1mIncomplete lock file information for providers[0m
+[33m│[0m [0m
+[33m│[0m [0m[0mDue to your customized provider installation methods, Terraform was forced
+[33m│[0m [0mto calculate lock file checksums locally for the following providers:
+[33m│[0m [0m  - hashicorp/random
+[33m│[0m [0m  - yandex-cloud/yandex
+[33m│[0m [0m
+[33m│[0m [0mThe current .terraform.lock.hcl file only includes checksums for
+[33m│[0m [0mlinux_amd64, so Terraform running on another platform will fail to install
+[33m│[0m [0mthese providers.
+[33m│[0m [0m
+[33m│[0m [0mTo calculate additional checksums for another platform, run:
+[33m│[0m [0m  terraform providers lock -platform=linux_amd64
+[33m│[0m [0m(where linux_amd64 is the platform to generate)
+[33m╵[0m[0m
+[0m[0m
+[0m[1m[32mTerraform has been successfully initialized![0m[32m[0m
+[0m[32m
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.[0m
+[32;1m$ terraform plan -out "planfile"[0;m
+Acquiring state lock. This may take a few moments...
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  [32m+[0m create[0m
+
+Terraform will perform the following actions:
+
+[1m  # random_shuffle.diplom-network-subnet-random[0m will be created
+[0m  [32m+[0m[0m resource "random_shuffle" "diplom-network-subnet-random" {
+      [32m+[0m[0m id           = (known after apply)
+      [32m+[0m[0m input        = [
+          [32m+[0m[0m (known after apply),
+          [32m+[0m[0m (known after apply),
+        ]
+      [32m+[0m[0m result       = (known after apply)
+      [32m+[0m[0m result_count = 1
+    }
+
+[1m  # yandex_compute_instance.k8s-cluster["k8s-node1"][0m will be created
+[0m  [32m+[0m[0m resource "yandex_compute_instance" "k8s-cluster" {
+      [32m+[0m[0m created_at                = (known after apply)
+      [32m+[0m[0m folder_id                 = (known after apply)
+      [32m+[0m[0m fqdn                      = (known after apply)
+      [32m+[0m[0m gpu_cluster_id            = (known after apply)
+      [32m+[0m[0m hostname                  = "k8s-node1.diplom.local"
+      [32m+[0m[0m id                        = (known after apply)
+      [32m+[0m[0m maintenance_grace_period  = (known after apply)
+      [32m+[0m[0m maintenance_policy        = (known after apply)
+      [32m+[0m[0m metadata                  = {
+          [32m+[0m[0m "serial-port-enable" = "1"
+          [32m+[0m[0m "ssh-keys"           = <<-EOT
+                ubuntu:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7KoRsmTb6EC67YSxCrvoqTLhZcBgEd7lM4LebHU5p7qBtvyxA+oUxkH1Z4HjR2zbKEzDqtFfgREN5gaMFzHG/pa7RgMPR1c5lBynlsCzHDQqKt9417IoXfT71bFo2Mh+wXHo9gcJw9tU+4pab93zMBN7a40XtKWYQFsSQ0TffpprCcBkkqBeuBS9BFh3oaL7hRIOWPmUwpXmhY+Te7oaluj8fPxq/2ahPF1kthLY1NTLQvRGbrxENxsysi0jZwfDkYzWdWqhI5BA8fyG8e1wcpTM+9U8F4sAGMBxI5vEcC1J/Eb940tnEfp+oeZzcrSH9IRVCOgyGnEBh/qloxP7HVlErpX7KGf8h6s18h4d4mi5ylgBBgYfn/Wszej+Yotdgc+TJYihe/dDRulsxEcU/UQjIheqIoIIZApnajk0GdEyOtZpU/cY+CrtBH2czMLlNpn4lEOkcaCQu2XeqKn2yQNiOqz8jsDrVrTRrJHTEZ7+kkUROqmuNtcJdWl+4YH0= denis@denis-lin
+            EOT
+        }
+      [32m+[0m[0m name                      = "k8s-node1"
+      [32m+[0m[0m network_acceleration_type = "standard"
+      [32m+[0m[0m platform_id               = "standard-v1"
+      [32m+[0m[0m service_account_id        = (known after apply)
+      [32m+[0m[0m status                    = (known after apply)
+      [32m+[0m[0m zone                      = (known after apply)
+
+      [32m+[0m[0m boot_disk {
+          [32m+[0m[0m auto_delete = true
+          [32m+[0m[0m device_name = (known after apply)
+          [32m+[0m[0m disk_id     = (known after apply)
+          [32m+[0m[0m mode        = (known after apply)
+
+          [32m+[0m[0m initialize_params {
+              [32m+[0m[0m block_size  = (known after apply)
+              [32m+[0m[0m description = (known after apply)
+              [32m+[0m[0m image_id    = "fd8tckeqoshi403tks4l"
+              [32m+[0m[0m name        = (known after apply)
+              [32m+[0m[0m size        = 20
+              [32m+[0m[0m snapshot_id = (known after apply)
+              [32m+[0m[0m type        = "network-hdd"
+            }
+        }
+
+      [32m+[0m[0m network_interface {
+          [32m+[0m[0m index              = (known after apply)
+          [32m+[0m[0m ip_address         = (known after apply)
+          [32m+[0m[0m ipv4               = true
+          [32m+[0m[0m ipv6               = (known after apply)
+          [32m+[0m[0m ipv6_address       = (known after apply)
+          [32m+[0m[0m mac_address        = (known after apply)
+          [32m+[0m[0m nat                = true
+          [32m+[0m[0m nat_ip_address     = (known after apply)
+          [32m+[0m[0m nat_ip_version     = (known after apply)
+          [32m+[0m[0m security_group_ids = (known after apply)
+          [32m+[0m[0m subnet_id          = (known after apply)
+        }
+
+      [32m+[0m[0m resources {
+          [32m+[0m[0m core_fraction = 100
+          [32m+[0m[0m cores         = 2
+          [32m+[0m[0m memory        = 2
+        }
+    }
+
+[1m  # yandex_compute_instance.k8s-cluster["k8s-node2"][0m will be created
+[0m  [32m+[0m[0m resource "yandex_compute_instance" "k8s-cluster" {
+      [32m+[0m[0m created_at                = (known after apply)
+      [32m+[0m[0m folder_id                 = (known after apply)
+      [32m+[0m[0m fqdn                      = (known after apply)
+      [32m+[0m[0m gpu_cluster_id            = (known after apply)
+      [32m+[0m[0m hostname                  = "k8s-node2.diplom.local"
+      [32m+[0m[0m id                        = (known after apply)
+      [32m+[0m[0m maintenance_grace_period  = (known after apply)
+      [32m+[0m[0m maintenance_policy        = (known after apply)
+      [32m+[0m[0m metadata                  = {
+          [32m+[0m[0m "serial-port-enable" = "1"
+          [32m+[0m[0m "ssh-keys"           = <<-EOT
+                ubuntu:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7KoRsmTb6EC67YSxCrvoqTLhZcBgEd7lM4LebHU5p7qBtvyxA+oUxkH1Z4HjR2zbKEzDqtFfgREN5gaMFzHG/pa7RgMPR1c5lBynlsCzHDQqKt9417IoXfT71bFo2Mh+wXHo9gcJw9tU+4pab93zMBN7a40XtKWYQFsSQ0TffpprCcBkkqBeuBS9BFh3oaL7hRIOWPmUwpXmhY+Te7oaluj8fPxq/2ahPF1kthLY1NTLQvRGbrxENxsysi0jZwfDkYzWdWqhI5BA8fyG8e1wcpTM+9U8F4sAGMBxI5vEcC1J/Eb940tnEfp+oeZzcrSH9IRVCOgyGnEBh/qloxP7HVlErpX7KGf8h6s18h4d4mi5ylgBBgYfn/Wszej+Yotdgc+TJYihe/dDRulsxEcU/UQjIheqIoIIZApnajk0GdEyOtZpU/cY+CrtBH2czMLlNpn4lEOkcaCQu2XeqKn2yQNiOqz8jsDrVrTRrJHTEZ7+kkUROqmuNtcJdWl+4YH0= denis@denis-lin
+            EOT
+        }
+      [32m+[0m[0m name                      = "k8s-node2"
+      [32m+[0m[0m network_acceleration_type = "standard"
+      [32m+[0m[0m platform_id               = "standard-v1"
+      [32m+[0m[0m service_account_id        = (known after apply)
+      [32m+[0m[0m status                    = (known after apply)
+      [32m+[0m[0m zone                      = (known after apply)
+
+      [32m+[0m[0m boot_disk {
+          [32m+[0m[0m auto_delete = true
+          [32m+[0m[0m device_name = (known after apply)
+          [32m+[0m[0m disk_id     = (known after apply)
+          [32m+[0m[0m mode        = (known after apply)
+
+          [32m+[0m[0m initialize_params {
+              [32m+[0m[0m block_size  = (known after apply)
+              [32m+[0m[0m description = (known after apply)
+              [32m+[0m[0m image_id    = "fd8tckeqoshi403tks4l"
+              [32m+[0m[0m name        = (known after apply)
+              [32m+[0m[0m size        = 20
+              [32m+[0m[0m snapshot_id = (known after apply)
+              [32m+[0m[0m type        = "network-hdd"
+            }
+        }
+
+      [32m+[0m[0m network_interface {
+          [32m+[0m[0m index              = (known after apply)
+          [32m+[0m[0m ip_address         = (known after apply)
+          [32m+[0m[0m ipv4               = true
+          [32m+[0m[0m ipv6               = (known after apply)
+          [32m+[0m[0m ipv6_address       = (known after apply)
+          [32m+[0m[0m mac_address        = (known after apply)
+          [32m+[0m[0m nat                = true
+          [32m+[0m[0m nat_ip_address     = (known after apply)
+          [32m+[0m[0m nat_ip_version     = (known after apply)
+          [32m+[0m[0m security_group_ids = (known after apply)
+          [32m+[0m[0m subnet_id          = (known after apply)
+        }
+
+      [32m+[0m[0m resources {
+          [32m+[0m[0m core_fraction = 100
+          [32m+[0m[0m cores         = 2
+          [32m+[0m[0m memory        = 2
+        }
+    }
+
+[1m  # yandex_compute_instance.k8s-cluster["k8s-node3"][0m will be created
+[0m  [32m+[0m[0m resource "yandex_compute_instance" "k8s-cluster" {
+      [32m+[0m[0m created_at                = (known after apply)
+      [32m+[0m[0m folder_id                 = (known after apply)
+      [32m+[0m[0m fqdn                      = (known after apply)
+      [32m+[0m[0m gpu_cluster_id            = (known after apply)
+      [32m+[0m[0m hostname                  = "k8s-node3.diplom.local"
+      [32m+[0m[0m id                        = (known after apply)
+      [32m+[0m[0m maintenance_grace_period  = (known after apply)
+      [32m+[0m[0m maintenance_policy        = (known after apply)
+      [32m+[0m[0m metadata                  = {
+          [32m+[0m[0m "serial-port-enable" = "1"
+          [32m+[0m[0m "ssh-keys"           = <<-EOT
+                ubuntu:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7KoRsmTb6EC67YSxCrvoqTLhZcBgEd7lM4LebHU5p7qBtvyxA+oUxkH1Z4HjR2zbKEzDqtFfgREN5gaMFzHG/pa7RgMPR1c5lBynlsCzHDQqKt9417IoXfT71bFo2Mh+wXHo9gcJw9tU+4pab93zMBN7a40XtKWYQFsSQ0TffpprCcBkkqBeuBS9BFh3oaL7hRIOWPmUwpXmhY+Te7oaluj8fPxq/2ahPF1kthLY1NTLQvRGbrxENxsysi0jZwfDkYzWdWqhI5BA8fyG8e1wcpTM+9U8F4sAGMBxI5vEcC1J/Eb940tnEfp+oeZzcrSH9IRVCOgyGnEBh/qloxP7HVlErpX7KGf8h6s18h4d4mi5ylgBBgYfn/Wszej+Yotdgc+TJYihe/dDRulsxEcU/UQjIheqIoIIZApnajk0GdEyOtZpU/cY+CrtBH2czMLlNpn4lEOkcaCQu2XeqKn2yQNiOqz8jsDrVrTRrJHTEZ7+kkUROqmuNtcJdWl+4YH0= denis@denis-lin
+            EOT
+        }
+      [32m+[0m[0m name                      = "k8s-node3"
+      [32m+[0m[0m network_acceleration_type = "standard"
+      [32m+[0m[0m platform_id               = "standard-v1"
+      [32m+[0m[0m service_account_id        = (known after apply)
+      [32m+[0m[0m status                    = (known after apply)
+      [32m+[0m[0m zone                      = (known after apply)
+
+      [32m+[0m[0m boot_disk {
+          [32m+[0m[0m auto_delete = true
+          [32m+[0m[0m device_name = (known after apply)
+          [32m+[0m[0m disk_id     = (known after apply)
+          [32m+[0m[0m mode        = (known after apply)
+
+          [32m+[0m[0m initialize_params {
+              [32m+[0m[0m block_size  = (known after apply)
+              [32m+[0m[0m description = (known after apply)
+              [32m+[0m[0m image_id    = "fd8tckeqoshi403tks4l"
+              [32m+[0m[0m name        = (known after apply)
+              [32m+[0m[0m size        = 20
+              [32m+[0m[0m snapshot_id = (known after apply)
+              [32m+[0m[0m type        = "network-hdd"
+            }
+        }
+
+      [32m+[0m[0m network_interface {
+          [32m+[0m[0m index              = (known after apply)
+          [32m+[0m[0m ip_address         = (known after apply)
+          [32m+[0m[0m ipv4               = true
+          [32m+[0m[0m ipv6               = (known after apply)
+          [32m+[0m[0m ipv6_address       = (known after apply)
+          [32m+[0m[0m mac_address        = (known after apply)
+          [32m+[0m[0m nat                = true
+          [32m+[0m[0m nat_ip_address     = (known after apply)
+          [32m+[0m[0m nat_ip_version     = (known after apply)
+          [32m+[0m[0m security_group_ids = (known after apply)
+          [32m+[0m[0m subnet_id          = (known after apply)
+        }
+
+      [32m+[0m[0m resources {
+          [32m+[0m[0m core_fraction = 100
+          [32m+[0m[0m cores         = 2
+          [32m+[0m[0m memory        = 2
+        }
+    }
+
+[1m  # yandex_vpc_network.diplom-network[0m will be created
+[0m  [32m+[0m[0m resource "yandex_vpc_network" "diplom-network" {
+      [32m+[0m[0m created_at                = (known after apply)
+      [32m+[0m[0m default_security_group_id = (known after apply)
+      [32m+[0m[0m folder_id                 = (known after apply)
+      [32m+[0m[0m id                        = (known after apply)
+      [32m+[0m[0m labels                    = (known after apply)
+      [32m+[0m[0m name                      = "diplom-network"
+      [32m+[0m[0m subnet_ids                = (known after apply)
+    }
+
+[1m  # yandex_vpc_subnet.diplom-network-subnet-a[0m will be created
+[0m  [32m+[0m[0m resource "yandex_vpc_subnet" "diplom-network-subnet-a" {
+      [32m+[0m[0m created_at     = (known after apply)
+      [32m+[0m[0m folder_id      = (known after apply)
+      [32m+[0m[0m id             = (known after apply)
+      [32m+[0m[0m labels         = (known after apply)
+      [32m+[0m[0m name           = "diplom-network-subnet-a"
+      [32m+[0m[0m network_id     = (known after apply)
+      [32m+[0m[0m v4_cidr_blocks = [
+          [32m+[0m[0m "192.168.10.0/24",
+        ]
+      [32m+[0m[0m v6_cidr_blocks = (known after apply)
+      [32m+[0m[0m zone           = "ru-central1-a"
+    }
+
+[1m  # yandex_vpc_subnet.diplom-network-subnet-b[0m will be created
+[0m  [32m+[0m[0m resource "yandex_vpc_subnet" "diplom-network-subnet-b" {
+      [32m+[0m[0m created_at     = (known after apply)
+      [32m+[0m[0m folder_id      = (known after apply)
+      [32m+[0m[0m id             = (known after apply)
+      [32m+[0m[0m labels         = (known after apply)
+      [32m+[0m[0m name           = "diplom-network-subnet-b"
+      [32m+[0m[0m network_id     = (known after apply)
+      [32m+[0m[0m v4_cidr_blocks = [
+          [32m+[0m[0m "192.168.11.0/24",
+        ]
+      [32m+[0m[0m v6_cidr_blocks = (known after apply)
+      [32m+[0m[0m zone           = "ru-central1-b"
+    }
+
+[1mPlan:[0m 7 to add, 0 to change, 0 to destroy.
+[0m
+Changes to Outputs:
+  [32m+[0m[0m cluster_ips = {
+      [32m+[0m[0m external = [
+          [32m+[0m[0m [90mnull[0m[0m,
+          [32m+[0m[0m [90mnull[0m[0m,
+          [32m+[0m[0m [90mnull[0m[0m,
+        ]
+      [32m+[0m[0m internal = [
+          [32m+[0m[0m [90mnull[0m[0m,
+          [32m+[0m[0m [90mnull[0m[0m,
+          [32m+[0m[0m [90mnull[0m[0m,
+        ]
+    }
+[90m
+─────────────────────────────────────────────────────────────────────────────[0m
+
+Saved the plan to: planfile
+
+To perform exactly these actions, run the following command to apply:
+    terraform apply "planfile"
+section_end:1708003154:step_script
+[0Ksection_start:1708003154:upload_artifacts_on_success
+[0K[0K[36;1mUploading artifacts for successful job[0;m[0;m
+[32;1mUploading artifacts...[0;m
+planfile: found 1 matching artifact files and directories[0;m 
+Uploading artifacts as "archive" to coordinator... 201 Created[0;m  id[0;m=329 responseStatus[0;m=201 Created token[0;m=64_zXbTZ
+section_end:1708003158:upload_artifacts_on_success
+[0Ksection_start:1708003158:cleanup_file_variables
+[0K[0K[36;1mCleaning up project directory and file based variables[0;m[0;m
+section_end:1708003159:cleanup_file_variables
+[0K[32;1mJob succeeded[0;m
+```
+
+</details>
+
+<details><summary>apply</summary>
+
+[raw](https://gitlab.it-git.ru/test/diplom-terraform/-/jobs/330/raw)
+
+```txt
+[0KRunning with gitlab-runner 16.2.1 (674e0e29)[0;m
+[0K  on gitlab-runner-1 GvwJgJtvC, system ID: s_3b0069d0acea[0;m
+section_start:1708003675:prepare_executor
+[0K[0K[36;1mPreparing the "docker" executor[0;m[0;m
+[0KUsing Docker executor with image hashicorp/terraform:light ...[0;m
+[0KPulling docker image hashicorp/terraform:light ...[0;m
+[0KUsing docker image sha256:22ae929e925c6bdb60846c05fbee4f15ef15bd02d101e23f34dd6be69cace0f3 for hashicorp/terraform:light with digest hashicorp/terraform@sha256:2734886211a482abaff7efbbfd8bdb32295c9c35dda124092d46f39b69f47c42 ...[0;m
+section_end:1708003680:prepare_executor
+[0Ksection_start:1708003680:prepare_script
+[0K[0K[36;1mPreparing environment[0;m[0;m
+Running on runner-gvwjgjtvc-project-3-concurrent-0 via gitlab-runner-1...
+section_end:1708003681:prepare_script
+[0Ksection_start:1708003681:get_sources
+[0K[0K[36;1mGetting source from Git repository[0;m[0;m
+[32;1mFetching changes with git depth set to 20...[0;m
+Reinitialized existing Git repository in /builds/test/diplom-terraform/.git/
+[32;1mChecking out f7372221 as detached HEAD (ref is main)...[0;m
+Removing .terraform.lock.hcl
+Removing .terraform/
+Removing planfile
+
+[32;1mSkipping Git submodules setup[0;m
+section_end:1708003683:get_sources
+[0Ksection_start:1708003683:download_artifacts
+[0K[0K[36;1mDownloading artifacts[0;m[0;m
+[32;1mDownloading artifacts for plan (329)...[0;m
+Downloading artifacts from coordinator... ok      [0;m  host[0;m=gitlab.it-git.ru id[0;m=329 responseStatus[0;m=200 OK token[0;m=64_iQVx-
+section_end:1708003684:download_artifacts
+[0Ksection_start:1708003684:step_script
+[0K[0K[36;1mExecuting "step_script" stage of the job script[0;m[0;m
+[0KUsing docker image sha256:22ae929e925c6bdb60846c05fbee4f15ef15bd02d101e23f34dd6be69cace0f3 for hashicorp/terraform:light with digest hashicorp/terraform@sha256:2734886211a482abaff7efbbfd8bdb32295c9c35dda124092d46f39b69f47c42 ...[0;m
+[32;1m$ cp .terraformrc /root/.terraformrc[0;m
+[32;1m$ rm -rf .terraform[0;m
+[32;1m$ terraform --version[0;m
+Terraform v1.4.2
+on linux_amd64
+
+Your version of Terraform is out of date! The latest version
+is 1.7.3. You can update by downloading from https://www.terraform.io/downloads.html
+[32;1m$ export GITLAB_ACCESS_TOKEN=$GITLAB_TOCKEN[0;m
+[32;1m$ sed -i "s/__TOKEN__/$TOKEN/" variables.tf[0;m
+[32;1m$ terraform init[0;m
+
+[0m[1mInitializing the backend...[0m
+[0m[32m
+Successfully configured the backend "http"! Terraform will automatically
+use this backend unless the backend configuration changes.[0m
+
+[0m[1mInitializing provider plugins...[0m
+- Finding latest version of yandex-cloud/yandex...
+- Finding latest version of hashicorp/random...
+- Installing yandex-cloud/yandex v0.108.0...
+- Installed yandex-cloud/yandex v0.108.0 (unauthenticated)
+- Installing hashicorp/random v3.6.0...
+- Installed hashicorp/random v3.6.0 (unauthenticated)
+
+Terraform has created a lock file [1m.terraform.lock.hcl[0m to record the provider
+selections it made above. Include this file in your version control repository
+so that Terraform can guarantee to make the same selections by default when
+you run "terraform init" in the future.[0m
+
+[33m[33m╷[0m[0m
+[33m│[0m [0m[1m[33mWarning: [0m[0m[1mIncomplete lock file information for providers[0m
+[33m│[0m [0m
+[33m│[0m [0m[0mDue to your customized provider installation methods, Terraform was forced
+[33m│[0m [0mto calculate lock file checksums locally for the following providers:
+[33m│[0m [0m  - hashicorp/random
+[33m│[0m [0m  - yandex-cloud/yandex
+[33m│[0m [0m
+[33m│[0m [0mThe current .terraform.lock.hcl file only includes checksums for
+[33m│[0m [0mlinux_amd64, so Terraform running on another platform will fail to install
+[33m│[0m [0mthese providers.
+[33m│[0m [0m
+[33m│[0m [0mTo calculate additional checksums for another platform, run:
+[33m│[0m [0m  terraform providers lock -platform=linux_amd64
+[33m│[0m [0m(where linux_amd64 is the platform to generate)
+[33m╵[0m[0m
+[0m[0m
+[0m[1m[32mTerraform has been successfully initialized![0m[32m[0m
+[0m[32m
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.[0m
+[32;1m$ terraform apply -auto-approve "planfile"[0;m
+[0m[1myandex_vpc_network.diplom-network: Creating...[0m[0m
+[0m[1myandex_vpc_network.diplom-network: Creation complete after 4s [id=enp48huj8ab5ubime77m][0m
+[0m[1myandex_vpc_subnet.diplom-network-subnet-a: Creating...[0m[0m
+[0m[1myandex_vpc_subnet.diplom-network-subnet-b: Creating...[0m[0m
+[0m[1myandex_vpc_subnet.diplom-network-subnet-b: Creation complete after 1s [id=e2lbtdq0id3k2avv45sm][0m
+[0m[1myandex_vpc_subnet.diplom-network-subnet-a: Creation complete after 1s [id=e9bp6i4phmsbasju46hb][0m
+[0m[1mrandom_shuffle.diplom-network-subnet-random: Creating...[0m[0m
+[0m[1mrandom_shuffle.diplom-network-subnet-random: Creation complete after 0s [id=-][0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node2"]: Creating...[0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node1"]: Creating...[0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node3"]: Creating...[0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node1"]: Still creating... [10s elapsed][0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node2"]: Still creating... [10s elapsed][0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node3"]: Still creating... [10s elapsed][0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node2"]: Still creating... [20s elapsed][0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node1"]: Still creating... [20s elapsed][0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node3"]: Still creating... [20s elapsed][0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node2"]: Still creating... [30s elapsed][0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node1"]: Still creating... [30s elapsed][0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node3"]: Still creating... [30s elapsed][0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node2"]: Creation complete after 36s [id=fhm10404qco16b0d3j77][0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node3"]: Creation complete after 36s [id=fhmnne713httg57trv06][0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node1"]: Still creating... [40s elapsed][0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node1"]: Creation complete after 45s [id=fhm5htkn04et2l8khpok][0m
+[0m[1m[32m
+Apply complete! Resources: 7 added, 0 changed, 0 destroyed.
+[0m[0m[1m[32m
+Outputs:
+
+[0mcluster_ips = {
+  "external" = [
+    "158.160.116.25",
+    "158.160.40.26",
+    "178.154.207.84",
+  ]
+  "internal" = [
+    "192.168.10.4",
+    "192.168.10.10",
+    "192.168.10.13",
+  ]
+}
+section_end:1708003744:step_script
+[0Ksection_start:1708003744:cleanup_file_variables
+[0K[0K[36;1mCleaning up project directory and file based variables[0;m[0;m
+section_end:1708003745:cleanup_file_variables
+[0K[32;1mJob succeeded[0;m
+```
+
+![tf2](img/tf2.png)
+
+![tf3](img/tf3.png)
+
+</details>
+
+<details><summary>destroy</summary>
+
+[raw](https://gitlab.it-git.ru/test/diplom-terraform/-/jobs/331/raw)
+
+```txt
+[0KRunning with gitlab-runner 16.2.1 (674e0e29)[0;m
+[0K  on gitlab-runner-1 GvwJgJtvC, system ID: s_3b0069d0acea[0;m
+section_start:1708004058:prepare_executor
+[0K[0K[36;1mPreparing the "docker" executor[0;m[0;m
+[0KUsing Docker executor with image hashicorp/terraform:light ...[0;m
+[0KPulling docker image hashicorp/terraform:light ...[0;m
+[0KUsing docker image sha256:22ae929e925c6bdb60846c05fbee4f15ef15bd02d101e23f34dd6be69cace0f3 for hashicorp/terraform:light with digest hashicorp/terraform@sha256:2734886211a482abaff7efbbfd8bdb32295c9c35dda124092d46f39b69f47c42 ...[0;m
+section_end:1708004063:prepare_executor
+[0Ksection_start:1708004063:prepare_script
+[0K[0K[36;1mPreparing environment[0;m[0;m
+Running on runner-gvwjgjtvc-project-3-concurrent-0 via gitlab-runner-1...
+section_end:1708004063:prepare_script
+[0Ksection_start:1708004063:get_sources
+[0K[0K[36;1mGetting source from Git repository[0;m[0;m
+[32;1mFetching changes with git depth set to 20...[0;m
+Reinitialized existing Git repository in /builds/test/diplom-terraform/.git/
+[32;1mChecking out f7372221 as detached HEAD (ref is main)...[0;m
+Removing .terraform.lock.hcl
+Removing .terraform/
+Removing planfile
+
+[32;1mSkipping Git submodules setup[0;m
+section_end:1708004064:get_sources
+[0Ksection_start:1708004064:step_script
+[0K[0K[36;1mExecuting "step_script" stage of the job script[0;m[0;m
+[0KUsing docker image sha256:22ae929e925c6bdb60846c05fbee4f15ef15bd02d101e23f34dd6be69cace0f3 for hashicorp/terraform:light with digest hashicorp/terraform@sha256:2734886211a482abaff7efbbfd8bdb32295c9c35dda124092d46f39b69f47c42 ...[0;m
+[32;1m$ cp .terraformrc /root/.terraformrc[0;m
+[32;1m$ rm -rf .terraform[0;m
+[32;1m$ terraform --version[0;m
+Terraform v1.4.2
+on linux_amd64
+
+Your version of Terraform is out of date! The latest version
+is 1.7.3. You can update by downloading from https://www.terraform.io/downloads.html
+[32;1m$ export GITLAB_ACCESS_TOKEN=$GITLAB_TOCKEN[0;m
+[32;1m$ sed -i "s/__TOKEN__/$TOKEN/" variables.tf[0;m
+[32;1m$ terraform init[0;m
+
+[0m[1mInitializing the backend...[0m
+[0m[32m
+Successfully configured the backend "http"! Terraform will automatically
+use this backend unless the backend configuration changes.[0m
+
+[0m[1mInitializing provider plugins...[0m
+- Finding latest version of yandex-cloud/yandex...
+- Finding latest version of hashicorp/random...
+- Installing yandex-cloud/yandex v0.108.0...
+- Installed yandex-cloud/yandex v0.108.0 (unauthenticated)
+- Installing hashicorp/random v3.6.0...
+- Installed hashicorp/random v3.6.0 (unauthenticated)
+
+Terraform has created a lock file [1m.terraform.lock.hcl[0m to record the provider
+selections it made above. Include this file in your version control repository
+so that Terraform can guarantee to make the same selections by default when
+you run "terraform init" in the future.[0m
+
+[33m[33m╷[0m[0m
+[33m│[0m [0m[1m[33mWarning: [0m[0m[1mIncomplete lock file information for providers[0m
+[33m│[0m [0m
+[33m│[0m [0m[0mDue to your customized provider installation methods, Terraform was forced
+[33m│[0m [0mto calculate lock file checksums locally for the following providers:
+[33m│[0m [0m  - hashicorp/random
+[33m│[0m [0m  - yandex-cloud/yandex
+[33m│[0m [0m
+[33m│[0m [0mThe current .terraform.lock.hcl file only includes checksums for
+[33m│[0m [0mlinux_amd64, so Terraform running on another platform will fail to install
+[33m│[0m [0mthese providers.
+[33m│[0m [0m
+[33m│[0m [0mTo calculate additional checksums for another platform, run:
+[33m│[0m [0m  terraform providers lock -platform=linux_amd64
+[33m│[0m [0m(where linux_amd64 is the platform to generate)
+[33m╵[0m[0m
+[0m[0m
+[0m[1m[32mTerraform has been successfully initialized![0m[32m[0m
+[0m[32m
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.[0m
+[32;1m$ terraform init[0;m
+
+[0m[1mInitializing the backend...[0m
+
+[0m[1mInitializing provider plugins...[0m
+- Reusing previous version of yandex-cloud/yandex from the dependency lock file
+- Reusing previous version of hashicorp/random from the dependency lock file
+- Using previously-installed hashicorp/random v3.6.0
+- Using previously-installed yandex-cloud/yandex v0.108.0
+
+[0m[1m[32mTerraform has been successfully initialized![0m[32m[0m
+[0m[32m
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.[0m
+[32;1m$ terraform destroy -auto-approve[0;m
+[0m[1myandex_vpc_network.diplom-network: Refreshing state... [id=enp48huj8ab5ubime77m][0m
+[0m[1myandex_vpc_subnet.diplom-network-subnet-a: Refreshing state... [id=e9bp6i4phmsbasju46hb][0m
+[0m[1myandex_vpc_subnet.diplom-network-subnet-b: Refreshing state... [id=e2lbtdq0id3k2avv45sm][0m
+[0m[1mrandom_shuffle.diplom-network-subnet-random: Refreshing state... [id=-][0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node1"]: Refreshing state... [id=fhm5htkn04et2l8khpok][0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node2"]: Refreshing state... [id=fhm10404qco16b0d3j77][0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node3"]: Refreshing state... [id=fhmnne713httg57trv06][0m
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  [31m-[0m destroy[0m
+
+Terraform will perform the following actions:
+
+[1m  # random_shuffle.diplom-network-subnet-random[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "random_shuffle" "diplom-network-subnet-random" {
+      [31m-[0m[0m id           = "-" [90m-> null[0m[0m
+      [31m-[0m[0m input        = [
+          [31m-[0m[0m "e9bp6i4phmsbasju46hb",
+          [31m-[0m[0m "e9bp6i4phmsbasju46hb",
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m result       = [
+          [31m-[0m[0m "e9bp6i4phmsbasju46hb",
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m result_count = 1 [90m-> null[0m[0m
+    }
+
+[1m  # yandex_compute_instance.k8s-cluster["k8s-node1"][0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "yandex_compute_instance" "k8s-cluster" {
+      [31m-[0m[0m created_at                = "2024-02-15T13:28:20Z" [90m-> null[0m[0m
+      [31m-[0m[0m folder_id                 = "b1gfkh66dgk5tpn7ajko" [90m-> null[0m[0m
+      [31m-[0m[0m fqdn                      = "k8s-node1.diplom.local" [90m-> null[0m[0m
+      [31m-[0m[0m hostname                  = "k8s-node1.diplom.local" [90m-> null[0m[0m
+      [31m-[0m[0m id                        = "fhm5htkn04et2l8khpok" [90m-> null[0m[0m
+      [31m-[0m[0m labels                    = {} [90m-> null[0m[0m
+      [31m-[0m[0m metadata                  = {
+          [31m-[0m[0m "serial-port-enable" = "1"
+          [31m-[0m[0m "ssh-keys"           = <<-EOT
+                ubuntu:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7KoRsmTb6EC67YSxCrvoqTLhZcBgEd7lM4LebHU5p7qBtvyxA+oUxkH1Z4HjR2zbKEzDqtFfgREN5gaMFzHG/pa7RgMPR1c5lBynlsCzHDQqKt9417IoXfT71bFo2Mh+wXHo9gcJw9tU+4pab93zMBN7a40XtKWYQFsSQ0TffpprCcBkkqBeuBS9BFh3oaL7hRIOWPmUwpXmhY+Te7oaluj8fPxq/2ahPF1kthLY1NTLQvRGbrxENxsysi0jZwfDkYzWdWqhI5BA8fyG8e1wcpTM+9U8F4sAGMBxI5vEcC1J/Eb940tnEfp+oeZzcrSH9IRVCOgyGnEBh/qloxP7HVlErpX7KGf8h6s18h4d4mi5ylgBBgYfn/Wszej+Yotdgc+TJYihe/dDRulsxEcU/UQjIheqIoIIZApnajk0GdEyOtZpU/cY+CrtBH2czMLlNpn4lEOkcaCQu2XeqKn2yQNiOqz8jsDrVrTRrJHTEZ7+kkUROqmuNtcJdWl+4YH0= denis@denis-lin
+            EOT
+        } [90m-> null[0m[0m
+      [31m-[0m[0m name                      = "k8s-node1" [90m-> null[0m[0m
+      [31m-[0m[0m network_acceleration_type = "standard" [90m-> null[0m[0m
+      [31m-[0m[0m platform_id               = "standard-v1" [90m-> null[0m[0m
+      [31m-[0m[0m status                    = "running" [90m-> null[0m[0m
+      [31m-[0m[0m zone                      = "ru-central1-a" [90m-> null[0m[0m
+
+      [31m-[0m[0m boot_disk {
+          [31m-[0m[0m auto_delete = true [90m-> null[0m[0m
+          [31m-[0m[0m device_name = "fhm7d55ina368mmjs97c" [90m-> null[0m[0m
+          [31m-[0m[0m disk_id     = "fhm7d55ina368mmjs97c" [90m-> null[0m[0m
+          [31m-[0m[0m mode        = "READ_WRITE" [90m-> null[0m[0m
+
+          [31m-[0m[0m initialize_params {
+              [31m-[0m[0m block_size = 4096 [90m-> null[0m[0m
+              [31m-[0m[0m image_id   = "fd8tckeqoshi403tks4l" [90m-> null[0m[0m
+              [31m-[0m[0m size       = 20 [90m-> null[0m[0m
+              [31m-[0m[0m type       = "network-hdd" [90m-> null[0m[0m
+            }
+        }
+
+      [31m-[0m[0m metadata_options {
+          [31m-[0m[0m aws_v1_http_endpoint = 1 [90m-> null[0m[0m
+          [31m-[0m[0m aws_v1_http_token    = 2 [90m-> null[0m[0m
+          [31m-[0m[0m gce_http_endpoint    = 1 [90m-> null[0m[0m
+          [31m-[0m[0m gce_http_token       = 1 [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m network_interface {
+          [31m-[0m[0m index              = 0 [90m-> null[0m[0m
+          [31m-[0m[0m ip_address         = "192.168.10.4" [90m-> null[0m[0m
+          [31m-[0m[0m ipv4               = true [90m-> null[0m[0m
+          [31m-[0m[0m ipv6               = false [90m-> null[0m[0m
+          [31m-[0m[0m mac_address        = "d0:0d:58:f6:97:01" [90m-> null[0m[0m
+          [31m-[0m[0m nat                = true [90m-> null[0m[0m
+          [31m-[0m[0m nat_ip_address     = "158.160.116.25" [90m-> null[0m[0m
+          [31m-[0m[0m nat_ip_version     = "IPV4" [90m-> null[0m[0m
+          [31m-[0m[0m security_group_ids = [] [90m-> null[0m[0m
+          [31m-[0m[0m subnet_id          = "e9bp6i4phmsbasju46hb" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m placement_policy {
+          [31m-[0m[0m host_affinity_rules       = [] [90m-> null[0m[0m
+          [31m-[0m[0m placement_group_partition = 0 [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m resources {
+          [31m-[0m[0m core_fraction = 100 [90m-> null[0m[0m
+          [31m-[0m[0m cores         = 2 [90m-> null[0m[0m
+          [31m-[0m[0m gpus          = 0 [90m-> null[0m[0m
+          [31m-[0m[0m memory        = 2 [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m scheduling_policy {
+          [31m-[0m[0m preemptible = false [90m-> null[0m[0m
+        }
+    }
+
+[1m  # yandex_compute_instance.k8s-cluster["k8s-node2"][0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "yandex_compute_instance" "k8s-cluster" {
+      [31m-[0m[0m created_at                = "2024-02-15T13:28:20Z" [90m-> null[0m[0m
+      [31m-[0m[0m folder_id                 = "b1gfkh66dgk5tpn7ajko" [90m-> null[0m[0m
+      [31m-[0m[0m fqdn                      = "k8s-node2.diplom.local" [90m-> null[0m[0m
+      [31m-[0m[0m hostname                  = "k8s-node2.diplom.local" [90m-> null[0m[0m
+      [31m-[0m[0m id                        = "fhm10404qco16b0d3j77" [90m-> null[0m[0m
+      [31m-[0m[0m labels                    = {} [90m-> null[0m[0m
+      [31m-[0m[0m metadata                  = {
+          [31m-[0m[0m "serial-port-enable" = "1"
+          [31m-[0m[0m "ssh-keys"           = <<-EOT
+                ubuntu:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7KoRsmTb6EC67YSxCrvoqTLhZcBgEd7lM4LebHU5p7qBtvyxA+oUxkH1Z4HjR2zbKEzDqtFfgREN5gaMFzHG/pa7RgMPR1c5lBynlsCzHDQqKt9417IoXfT71bFo2Mh+wXHo9gcJw9tU+4pab93zMBN7a40XtKWYQFsSQ0TffpprCcBkkqBeuBS9BFh3oaL7hRIOWPmUwpXmhY+Te7oaluj8fPxq/2ahPF1kthLY1NTLQvRGbrxENxsysi0jZwfDkYzWdWqhI5BA8fyG8e1wcpTM+9U8F4sAGMBxI5vEcC1J/Eb940tnEfp+oeZzcrSH9IRVCOgyGnEBh/qloxP7HVlErpX7KGf8h6s18h4d4mi5ylgBBgYfn/Wszej+Yotdgc+TJYihe/dDRulsxEcU/UQjIheqIoIIZApnajk0GdEyOtZpU/cY+CrtBH2czMLlNpn4lEOkcaCQu2XeqKn2yQNiOqz8jsDrVrTRrJHTEZ7+kkUROqmuNtcJdWl+4YH0= denis@denis-lin
+            EOT
+        } [90m-> null[0m[0m
+      [31m-[0m[0m name                      = "k8s-node2" [90m-> null[0m[0m
+      [31m-[0m[0m network_acceleration_type = "standard" [90m-> null[0m[0m
+      [31m-[0m[0m platform_id               = "standard-v1" [90m-> null[0m[0m
+      [31m-[0m[0m status                    = "running" [90m-> null[0m[0m
+      [31m-[0m[0m zone                      = "ru-central1-a" [90m-> null[0m[0m
+
+      [31m-[0m[0m boot_disk {
+          [31m-[0m[0m auto_delete = true [90m-> null[0m[0m
+          [31m-[0m[0m device_name = "fhmadov7jg2403jng5d1" [90m-> null[0m[0m
+          [31m-[0m[0m disk_id     = "fhmadov7jg2403jng5d1" [90m-> null[0m[0m
+          [31m-[0m[0m mode        = "READ_WRITE" [90m-> null[0m[0m
+
+          [31m-[0m[0m initialize_params {
+              [31m-[0m[0m block_size = 4096 [90m-> null[0m[0m
+              [31m-[0m[0m image_id   = "fd8tckeqoshi403tks4l" [90m-> null[0m[0m
+              [31m-[0m[0m size       = 20 [90m-> null[0m[0m
+              [31m-[0m[0m type       = "network-hdd" [90m-> null[0m[0m
+            }
+        }
+
+      [31m-[0m[0m metadata_options {
+          [31m-[0m[0m aws_v1_http_endpoint = 1 [90m-> null[0m[0m
+          [31m-[0m[0m aws_v1_http_token    = 2 [90m-> null[0m[0m
+          [31m-[0m[0m gce_http_endpoint    = 1 [90m-> null[0m[0m
+          [31m-[0m[0m gce_http_token       = 1 [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m network_interface {
+          [31m-[0m[0m index              = 0 [90m-> null[0m[0m
+          [31m-[0m[0m ip_address         = "192.168.10.10" [90m-> null[0m[0m
+          [31m-[0m[0m ipv4               = true [90m-> null[0m[0m
+          [31m-[0m[0m ipv6               = false [90m-> null[0m[0m
+          [31m-[0m[0m mac_address        = "d0:0d:10:10:04:d3" [90m-> null[0m[0m
+          [31m-[0m[0m nat                = true [90m-> null[0m[0m
+          [31m-[0m[0m nat_ip_address     = "158.160.40.26" [90m-> null[0m[0m
+          [31m-[0m[0m nat_ip_version     = "IPV4" [90m-> null[0m[0m
+          [31m-[0m[0m security_group_ids = [] [90m-> null[0m[0m
+          [31m-[0m[0m subnet_id          = "e9bp6i4phmsbasju46hb" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m placement_policy {
+          [31m-[0m[0m host_affinity_rules       = [] [90m-> null[0m[0m
+          [31m-[0m[0m placement_group_partition = 0 [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m resources {
+          [31m-[0m[0m core_fraction = 100 [90m-> null[0m[0m
+          [31m-[0m[0m cores         = 2 [90m-> null[0m[0m
+          [31m-[0m[0m gpus          = 0 [90m-> null[0m[0m
+          [31m-[0m[0m memory        = 2 [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m scheduling_policy {
+          [31m-[0m[0m preemptible = false [90m-> null[0m[0m
+        }
+    }
+
+[1m  # yandex_compute_instance.k8s-cluster["k8s-node3"][0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "yandex_compute_instance" "k8s-cluster" {
+      [31m-[0m[0m created_at                = "2024-02-15T13:28:20Z" [90m-> null[0m[0m
+      [31m-[0m[0m folder_id                 = "b1gfkh66dgk5tpn7ajko" [90m-> null[0m[0m
+      [31m-[0m[0m fqdn                      = "k8s-node3.diplom.local" [90m-> null[0m[0m
+      [31m-[0m[0m hostname                  = "k8s-node3.diplom.local" [90m-> null[0m[0m
+      [31m-[0m[0m id                        = "fhmnne713httg57trv06" [90m-> null[0m[0m
+      [31m-[0m[0m labels                    = {} [90m-> null[0m[0m
+      [31m-[0m[0m metadata                  = {
+          [31m-[0m[0m "serial-port-enable" = "1"
+          [31m-[0m[0m "ssh-keys"           = <<-EOT
+                ubuntu:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7KoRsmTb6EC67YSxCrvoqTLhZcBgEd7lM4LebHU5p7qBtvyxA+oUxkH1Z4HjR2zbKEzDqtFfgREN5gaMFzHG/pa7RgMPR1c5lBynlsCzHDQqKt9417IoXfT71bFo2Mh+wXHo9gcJw9tU+4pab93zMBN7a40XtKWYQFsSQ0TffpprCcBkkqBeuBS9BFh3oaL7hRIOWPmUwpXmhY+Te7oaluj8fPxq/2ahPF1kthLY1NTLQvRGbrxENxsysi0jZwfDkYzWdWqhI5BA8fyG8e1wcpTM+9U8F4sAGMBxI5vEcC1J/Eb940tnEfp+oeZzcrSH9IRVCOgyGnEBh/qloxP7HVlErpX7KGf8h6s18h4d4mi5ylgBBgYfn/Wszej+Yotdgc+TJYihe/dDRulsxEcU/UQjIheqIoIIZApnajk0GdEyOtZpU/cY+CrtBH2czMLlNpn4lEOkcaCQu2XeqKn2yQNiOqz8jsDrVrTRrJHTEZ7+kkUROqmuNtcJdWl+4YH0= denis@denis-lin
+            EOT
+        } [90m-> null[0m[0m
+      [31m-[0m[0m name                      = "k8s-node3" [90m-> null[0m[0m
+      [31m-[0m[0m network_acceleration_type = "standard" [90m-> null[0m[0m
+      [31m-[0m[0m platform_id               = "standard-v1" [90m-> null[0m[0m
+      [31m-[0m[0m status                    = "running" [90m-> null[0m[0m
+      [31m-[0m[0m zone                      = "ru-central1-a" [90m-> null[0m[0m
+
+      [31m-[0m[0m boot_disk {
+          [31m-[0m[0m auto_delete = true [90m-> null[0m[0m
+          [31m-[0m[0m device_name = "fhmfk50ke0spq15rv2va" [90m-> null[0m[0m
+          [31m-[0m[0m disk_id     = "fhmfk50ke0spq15rv2va" [90m-> null[0m[0m
+          [31m-[0m[0m mode        = "READ_WRITE" [90m-> null[0m[0m
+
+          [31m-[0m[0m initialize_params {
+              [31m-[0m[0m block_size = 4096 [90m-> null[0m[0m
+              [31m-[0m[0m image_id   = "fd8tckeqoshi403tks4l" [90m-> null[0m[0m
+              [31m-[0m[0m size       = 20 [90m-> null[0m[0m
+              [31m-[0m[0m type       = "network-hdd" [90m-> null[0m[0m
+            }
+        }
+
+      [31m-[0m[0m metadata_options {
+          [31m-[0m[0m aws_v1_http_endpoint = 1 [90m-> null[0m[0m
+          [31m-[0m[0m aws_v1_http_token    = 2 [90m-> null[0m[0m
+          [31m-[0m[0m gce_http_endpoint    = 1 [90m-> null[0m[0m
+          [31m-[0m[0m gce_http_token       = 1 [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m network_interface {
+          [31m-[0m[0m index              = 0 [90m-> null[0m[0m
+          [31m-[0m[0m ip_address         = "192.168.10.13" [90m-> null[0m[0m
+          [31m-[0m[0m ipv4               = true [90m-> null[0m[0m
+          [31m-[0m[0m ipv6               = false [90m-> null[0m[0m
+          [31m-[0m[0m mac_address        = "d0:0d:17:bb:8e:11" [90m-> null[0m[0m
+          [31m-[0m[0m nat                = true [90m-> null[0m[0m
+          [31m-[0m[0m nat_ip_address     = "178.154.207.84" [90m-> null[0m[0m
+          [31m-[0m[0m nat_ip_version     = "IPV4" [90m-> null[0m[0m
+          [31m-[0m[0m security_group_ids = [] [90m-> null[0m[0m
+          [31m-[0m[0m subnet_id          = "e9bp6i4phmsbasju46hb" [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m placement_policy {
+          [31m-[0m[0m host_affinity_rules       = [] [90m-> null[0m[0m
+          [31m-[0m[0m placement_group_partition = 0 [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m resources {
+          [31m-[0m[0m core_fraction = 100 [90m-> null[0m[0m
+          [31m-[0m[0m cores         = 2 [90m-> null[0m[0m
+          [31m-[0m[0m gpus          = 0 [90m-> null[0m[0m
+          [31m-[0m[0m memory        = 2 [90m-> null[0m[0m
+        }
+
+      [31m-[0m[0m scheduling_policy {
+          [31m-[0m[0m preemptible = false [90m-> null[0m[0m
+        }
+    }
+
+[1m  # yandex_vpc_network.diplom-network[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "yandex_vpc_network" "diplom-network" {
+      [31m-[0m[0m created_at                = "2024-02-15T13:28:15Z" [90m-> null[0m[0m
+      [31m-[0m[0m default_security_group_id = "enpjtipc1cccj22qrnne" [90m-> null[0m[0m
+      [31m-[0m[0m folder_id                 = "b1gfkh66dgk5tpn7ajko" [90m-> null[0m[0m
+      [31m-[0m[0m id                        = "enp48huj8ab5ubime77m" [90m-> null[0m[0m
+      [31m-[0m[0m labels                    = {} [90m-> null[0m[0m
+      [31m-[0m[0m name                      = "diplom-network" [90m-> null[0m[0m
+      [31m-[0m[0m subnet_ids                = [
+          [31m-[0m[0m "e2lbtdq0id3k2avv45sm",
+          [31m-[0m[0m "e9bp6i4phmsbasju46hb",
+        ] [90m-> null[0m[0m
+    }
+
+[1m  # yandex_vpc_subnet.diplom-network-subnet-a[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "yandex_vpc_subnet" "diplom-network-subnet-a" {
+      [31m-[0m[0m created_at     = "2024-02-15T13:28:18Z" [90m-> null[0m[0m
+      [31m-[0m[0m folder_id      = "b1gfkh66dgk5tpn7ajko" [90m-> null[0m[0m
+      [31m-[0m[0m id             = "e9bp6i4phmsbasju46hb" [90m-> null[0m[0m
+      [31m-[0m[0m labels         = {} [90m-> null[0m[0m
+      [31m-[0m[0m name           = "diplom-network-subnet-a" [90m-> null[0m[0m
+      [31m-[0m[0m network_id     = "enp48huj8ab5ubime77m" [90m-> null[0m[0m
+      [31m-[0m[0m v4_cidr_blocks = [
+          [31m-[0m[0m "192.168.10.0/24",
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m v6_cidr_blocks = [] [90m-> null[0m[0m
+      [31m-[0m[0m zone           = "ru-central1-a" [90m-> null[0m[0m
+    }
+
+[1m  # yandex_vpc_subnet.diplom-network-subnet-b[0m will be [1m[31mdestroyed[0m
+[0m  [31m-[0m[0m resource "yandex_vpc_subnet" "diplom-network-subnet-b" {
+      [31m-[0m[0m created_at     = "2024-02-15T13:28:18Z" [90m-> null[0m[0m
+      [31m-[0m[0m folder_id      = "b1gfkh66dgk5tpn7ajko" [90m-> null[0m[0m
+      [31m-[0m[0m id             = "e2lbtdq0id3k2avv45sm" [90m-> null[0m[0m
+      [31m-[0m[0m labels         = {} [90m-> null[0m[0m
+      [31m-[0m[0m name           = "diplom-network-subnet-b" [90m-> null[0m[0m
+      [31m-[0m[0m network_id     = "enp48huj8ab5ubime77m" [90m-> null[0m[0m
+      [31m-[0m[0m v4_cidr_blocks = [
+          [31m-[0m[0m "192.168.11.0/24",
+        ] [90m-> null[0m[0m
+      [31m-[0m[0m v6_cidr_blocks = [] [90m-> null[0m[0m
+      [31m-[0m[0m zone           = "ru-central1-b" [90m-> null[0m[0m
+    }
+
+[1mPlan:[0m 0 to add, 0 to change, 7 to destroy.
+[0m
+Changes to Outputs:
+  [31m-[0m[0m cluster_ips = {
+      [31m-[0m[0m external = [
+          [31m-[0m[0m "158.160.116.25",
+          [31m-[0m[0m "158.160.40.26",
+          [31m-[0m[0m "178.154.207.84",
+        ]
+      [31m-[0m[0m internal = [
+          [31m-[0m[0m "192.168.10.4",
+          [31m-[0m[0m "192.168.10.10",
+          [31m-[0m[0m "192.168.10.13",
+        ]
+    } [90m-> null[0m[0m
+[0m[1myandex_vpc_subnet.diplom-network-subnet-b: Destroying... [id=e2lbtdq0id3k2avv45sm][0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node3"]: Destroying... [id=fhmnne713httg57trv06][0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node2"]: Destroying... [id=fhm10404qco16b0d3j77][0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node1"]: Destroying... [id=fhm5htkn04et2l8khpok][0m[0m
+[0m[1myandex_vpc_subnet.diplom-network-subnet-b: Destruction complete after 1s[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node1"]: Still destroying... [id=fhm5htkn04et2l8khpok, 10s elapsed][0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node3"]: Still destroying... [id=fhmnne713httg57trv06, 10s elapsed][0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node2"]: Still destroying... [id=fhm10404qco16b0d3j77, 10s elapsed][0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node2"]: Still destroying... [id=fhm10404qco16b0d3j77, 20s elapsed][0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node3"]: Still destroying... [id=fhmnne713httg57trv06, 20s elapsed][0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node1"]: Still destroying... [id=fhm5htkn04et2l8khpok, 20s elapsed][0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node2"]: Still destroying... [id=fhm10404qco16b0d3j77, 30s elapsed][0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node3"]: Still destroying... [id=fhmnne713httg57trv06, 30s elapsed][0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node1"]: Still destroying... [id=fhm5htkn04et2l8khpok, 30s elapsed][0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node3"]: Still destroying... [id=fhmnne713httg57trv06, 40s elapsed][0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node2"]: Still destroying... [id=fhm10404qco16b0d3j77, 40s elapsed][0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node1"]: Still destroying... [id=fhm5htkn04et2l8khpok, 40s elapsed][0m[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node3"]: Destruction complete after 40s[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node1"]: Destruction complete after 44s[0m
+[0m[1myandex_compute_instance.k8s-cluster["k8s-node2"]: Destruction complete after 48s[0m
+[0m[1mrandom_shuffle.diplom-network-subnet-random: Destroying... [id=-][0m[0m
+[0m[1mrandom_shuffle.diplom-network-subnet-random: Destruction complete after 0s[0m
+[0m[1myandex_vpc_subnet.diplom-network-subnet-a: Destroying... [id=e9bp6i4phmsbasju46hb][0m[0m
+[0m[1myandex_vpc_subnet.diplom-network-subnet-a: Destruction complete after 3s[0m
+[0m[1myandex_vpc_network.diplom-network: Destroying... [id=enp48huj8ab5ubime77m][0m[0m
+[0m[1myandex_vpc_network.diplom-network: Destruction complete after 1s[0m
+[0m[1m[32m
+Destroy complete! Resources: 7 destroyed.
+[0msection_end:1708004133:step_script
+[0Ksection_start:1708004133:cleanup_file_variables
+[0K[0K[36;1mCleaning up project directory and file based variables[0;m[0;m
+section_end:1708004133:cleanup_file_variables
+[0K[32;1mJob succeeded[0;m
+```
+![tf4](img/tf4.png)
+
+![tf5](img/tf5.png)
+
+</details>
+
+</details>
+
+<details><summary>Установка GitlabRunner в K8S</summary>
+
+```bash
+kubectl create namespace gitlab
+```
+
+Дальше создаем обычный раннер в гилабе (можно для конкретного проекта, можно групповой) нам необхомим runner-token который мы прописываем в secret.   
+Создаем секрсет в кубуре:
+
+```bash
+kubectl apply -f secret.yaml
+```
+
+Устанавливаем раннер (values можно отредактировать сразу или в процессе при необходимости будет удобно вносить изменения в конфгурацию раннера):
+
+```bash
+helm repo add gitlab https://charts.gitlab.io
+helm repo update
+helm install gitlab-runner gitlab/gitlab-runner -f my-values.yaml -n gitlab
+```
+
+[secret.yaml](file/gitlab/secret.yaml)   
+[my-values.yaml](file/gitlab/my-values.yaml)   
+
+Предоставим права администратора сервисной учетной записи «defaul» в пространстве имен «gitlab»
+
+```bash
+kubectl create clusterrolebinding gitlab-is-now-admin   --clusterrole=admin   --serviceaccount=gitlab:default
+```
+
+* Данный способ создания раннера удобен тем что нам нет необходимости, каждый раз создавать новый раннер.
+* В том числе при пересоздании окружения можем использовать тот же раннер
+
+
+```bash
+root@k8s-node1:/home/ubuntu# kubectl -n gitlab get po
+NAME                           READY   STATUS    RESTARTS   AGE
+gitlab-runner-cd899f6c-c59x5   1/1     Running   0          39s
+
+```
+
+</details>
+
+<details><summary>Http доступ к тестовому приложению</summary>
+
+Репозиторий с ci/cd для gitlab (расположен на github) [diplom-site](https://github.com/VodyakovDenis/diplom-site)
+
+![site1](img/site1.png)
+
+![site2](img/site2.png)
+
+![site3](img/site3.png)
+
+![site4](img/site4.png)
+
+![site5](img/site5.png)
+
+<details><summary>website</summary>
+
+[raw](https://gitlab.it-git.ru/test/diplom-site/-/jobs/332/raw)
+
+```txt
+[0KRunning with gitlab-runner 16.8.0 (c72a09b6)[0;m
+[0K  on gitlab-runner-cd899f6c-c59x5 WGXp7y8sR, system ID: r_Tgu3xwZqfvt8[0;m
+section_start:1708007992:prepare_executor
+[0K[0K[36;1mPreparing the "kubernetes" executor[0;m[0;m
+[0KUsing Kubernetes namespace: gitlab[0;m
+[0KUsing Kubernetes executor with image gcr.io/kaniko-project/executor:v1.11.0-debug ...[0;m
+[0KUsing attach strategy to execute scripts...[0;m
+section_end:1708007992:prepare_executor
+[0Ksection_start:1708007992:prepare_script
+[0K[0K[36;1mPreparing environment[0;m[0;m
+[0KUsing FF_USE_POD_ACTIVE_DEADLINE_SECONDS, the Pod activeDeadlineSeconds will be set to the job timeout: 1h0m0s...[0;m
+Waiting for pod gitlab/runner-wgxp7y8sr-project-2-concurrent-0-obj34nlc to be running, status is Pending
+Waiting for pod gitlab/runner-wgxp7y8sr-project-2-concurrent-0-obj34nlc to be running, status is Pending
+	ContainersNotInitialized: "containers with incomplete status: [init-permissions]"
+	ContainersNotReady: "containers with unready status: [build helper]"
+	ContainersNotReady: "containers with unready status: [build helper]"
+Waiting for pod gitlab/runner-wgxp7y8sr-project-2-concurrent-0-obj34nlc to be running, status is Pending
+	ContainersNotInitialized: "containers with incomplete status: [init-permissions]"
+	ContainersNotReady: "containers with unready status: [build helper]"
+	ContainersNotReady: "containers with unready status: [build helper]"
+Waiting for pod gitlab/runner-wgxp7y8sr-project-2-concurrent-0-obj34nlc to be running, status is Pending
+	ContainersNotReady: "containers with unready status: [build helper]"
+	ContainersNotReady: "containers with unready status: [build helper]"
+Waiting for pod gitlab/runner-wgxp7y8sr-project-2-concurrent-0-obj34nlc to be running, status is Pending
+	ContainersNotReady: "containers with unready status: [build helper]"
+	ContainersNotReady: "containers with unready status: [build helper]"
+Waiting for pod gitlab/runner-wgxp7y8sr-project-2-concurrent-0-obj34nlc to be running, status is Pending
+	ContainersNotReady: "containers with unready status: [build helper]"
+	ContainersNotReady: "containers with unready status: [build helper]"
+Running on runner-wgxp7y8sr-project-2-concurrent-0-obj34nlc via gitlab-runner-cd899f6c-c59x5...
+
+section_end:1708008010:prepare_script
+[0Ksection_start:1708008010:get_sources
+[0K[0K[36;1mGetting source from Git repository[0;m[0;m
+[32;1mFetching changes with git depth set to 20...[0;m
+Initialized empty Git repository in /builds/test/diplom-site/.git/
+[32;1mCreated fresh repository.[0;m
+[32;1mChecking out 06cfd51d as detached HEAD (ref is 0.1.0)...[0;m
+
+[32;1mSkipping Git submodules setup[0;m
+
+section_end:1708008012:get_sources
+[0Ksection_start:1708008012:step_script
+[0K[0K[36;1mExecuting "step_script" stage of the job script[0;m[0;m
+[32;1m$ echo "Authenticating with Docker registry..."[0;m
+Authenticating with Docker registry...
+[32;1m$ echo "{\"auths\":{\"${REGISTRY}\":{\"auth\":\"$(printf "%s:%s" "${DOCKER_USER}" "${DOCKER_PASS}" | base64 | tr -d '\n')\"}}}" > /kaniko/.docker/config.json[0;m
+[32;1m$ echo "Building container..."[0;m
+Building container...
+[32;1m$ /kaniko/executor --context "${CI_PROJECT_DIR}/website" --dockerfile "${CI_PROJECT_DIR}/website/Dockerfile" --destination "${CONTAINER_NAME}:${CI_COMMIT_TAG}"[0;m
+[36mINFO[0m[0001] Retrieving image manifest nginx:1.22.0-alpine 
+[36mINFO[0m[0001] Retrieving image nginx:1.22.0-alpine from registry index.docker.io 
+[36mINFO[0m[0002] Built cross stage deps: map[]                
+[36mINFO[0m[0002] Retrieving image manifest nginx:1.22.0-alpine 
+[36mINFO[0m[0002] Returning cached image manifest              
+[36mINFO[0m[0002] Executing 0 build triggers                   
+[36mINFO[0m[0002] Building stage 'nginx:1.22.0-alpine' [idx: '0', base-idx: '-1'] 
+[36mINFO[0m[0002] Unpacking rootfs as cmd COPY site /usr/share/nginx/html requires it. 
+[36mINFO[0m[0004] COPY site /usr/share/nginx/html              
+[36mINFO[0m[0004] Taking snapshot of files...                  
+[36mINFO[0m[0004] Pushing image to vodyakovdenis/diplom-test-site:0.1.0 
+[36mINFO[0m[0007] Pushed index.docker.io/vodyakovdenis/diplom-test-site@sha256:37c83059f9f18e6edfc67bc431e849d53d0bb50a537e2605e133b3a55484b7a9 
+
+section_end:1708008021:step_script
+[0Ksection_start:1708008021:cleanup_file_variables
+[0K[0K[36;1mCleaning up project directory and file based variables[0;m[0;m
+
+section_end:1708008021:cleanup_file_variables
+[0K[32;1mJob succeeded[0;m
+```
+
+</details>
+
+<details><summary>deploy</summary>
+
+[raw](https://gitlab.it-git.ru/test/diplom-site/-/jobs/334/raw)
+
+```txt
+[0KRunning with gitlab-runner 16.8.0 (c72a09b6)[0;m
+[0K  on gitlab-runner-cd899f6c-c59x5 WGXp7y8sR, system ID: r_Tgu3xwZqfvt8[0;m
+section_start:1708008303:prepare_executor
+[0K[0K[36;1mPreparing the "kubernetes" executor[0;m[0;m
+[0KUsing Kubernetes namespace: gitlab[0;m
+[0KUsing Kubernetes executor with image gcr.io/cloud-builders/kubectl:latest ...[0;m
+[0KUsing attach strategy to execute scripts...[0;m
+section_end:1708008303:prepare_executor
+[0Ksection_start:1708008303:prepare_script
+[0K[0K[36;1mPreparing environment[0;m[0;m
+[0KUsing FF_USE_POD_ACTIVE_DEADLINE_SECONDS, the Pod activeDeadlineSeconds will be set to the job timeout: 1h0m0s...[0;m
+Waiting for pod gitlab/runner-wgxp7y8sr-project-2-concurrent-0-c5kki1hy to be running, status is Pending
+Waiting for pod gitlab/runner-wgxp7y8sr-project-2-concurrent-0-c5kki1hy to be running, status is Pending
+	ContainersNotReady: "containers with unready status: [build helper]"
+	ContainersNotReady: "containers with unready status: [build helper]"
+Running on runner-wgxp7y8sr-project-2-concurrent-0-c5kki1hy via gitlab-runner-cd899f6c-c59x5...
+
+section_end:1708008316:prepare_script
+[0Ksection_start:1708008316:get_sources
+[0K[0K[36;1mGetting source from Git repository[0;m[0;m
+[32;1mFetching changes with git depth set to 20...[0;m
+Initialized empty Git repository in /builds/test/diplom-site/.git/
+[32;1mCreated fresh repository.[0;m
+[32;1mChecking out 06cfd51d as detached HEAD (ref is 0.1.0)...[0;m
+
+[32;1mSkipping Git submodules setup[0;m
+
+section_end:1708008327:get_sources
+[0Ksection_start:1708008327:step_script
+[0K[0K[36;1mExecuting "step_script" stage of the job script[0;m[0;m
+[32;1m$ kubectl config set-cluster kubernetes --server="$KUBE_URL" --insecure-skip-tls-verify=true[0;m
+Cluster "kubernetes" set.
+[32;1m$ kubectl config set-credentials admin --token="$KUBE_TOKEN"[0;m
+User "admin" set.
+[32;1m$ kubectl config set-context default --cluster=kubernetes --user=admin[0;m
+Context "default" created.
+[32;1m$ kubectl config use-context default[0;m
+Switched to context "default".
+[32;1m$ sed -i "s/__VERSION__/$CI_COMMIT_TAG/" diplom-app.yml[0;m
+[32;1m$ kubectl apply -f diplom-app.yml[0;m
+deployment.apps/diplom-app created
+service/diplom-app created
+ingress.networking.k8s.io/diplom-app created
+
+section_end:1708008344:step_script
+[0Ksection_start:1708008344:cleanup_file_variables
+[0K[0K[36;1mCleaning up project directory and file based variables[0;m[0;m
+
+section_end:1708008345:cleanup_file_variables
+[0K[32;1mJob succeeded[0;m
+```
+
+</details>
+
+```bash
+root@k8s-node1:/home/ubuntu# kubectl -n gitlab get svc
+NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+diplom-app   ClusterIP   10.245.134.185   <none>        80/TCP    2m21s
+root@k8s-node1:/home/ubuntu# kubectl -n gitlab get ingress
+NAME         CLASS   HOSTS              ADDRESS          PORTS   AGE
+diplom-app   nginx   denis.diplom.com   158.160.52.151   80      2m25s
+```
+
+![website](img/website.png)
+
+</details>
 
 ---
+
 
 <details><summary>* Полезные ссылки</summary>
 
@@ -1649,8 +2977,11 @@ https://cloud.yandex.ru/ru/docs/application-load-balancer/quickstart
 https://docs.nginx.com/nginx-ingress-controller/installation/installing-nic/installation-with-helm/   
 https://selectel.ru/blog/tutorials/monitoring-in-k8s-with-prometheus/   
 https://ru.stackoverflow.com/questions/931025/%D0%9D%D0%B5-%D1%80%D0%B0%D0%B1%D0%BE%D1%82%D0%B0%D0%B5%D1%82-dns-kubernetes-%D0%B2%D0%BD%D1%83%D1%82%D1%80%D0%B8-%D0%BA%D0%BE%D0%BD%D1%82%D0%B5%D0%B9%D0%BD%D0%B5%D1%80%D0%BE%D0%B2
-https://kubernetes.io/ru/docs/reference/kubectl/cheatsheet/   
+https://kubernetes.io/ru/docs/reference/kubectl/cheatsheet/
+https://kubernetes.io/docs/reference/config-api/kube-proxy-config.v1alpha1/   
 https://helm.sh/ru/docs/intro/using_helm/   
 https://nixhub.ru/posts/k8s-cluster-access/   
+https://docs.gitlab.com/ee/topics/autodevops/troubleshooting.html   
+https://docs.gitlab.com/ee/user/clusters/agent/ci_cd_workflow.html 
 
 </details>
